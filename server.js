@@ -7,10 +7,17 @@ const uploadShaders = require('./uploadshaders');
 const cors = require('cors');
 
 // Configuración de la base de datos
-const url = 'mongodb://127.0.0.1:27017';
-const dbName = 'shadersDB';
-const client = new MongoClient(url);
-const PORT = 3250;
+// Modo de producción con MongoDB Atlas
+const atlasUrl = 'mongodb+srv://jpupper:ayp0624@jpshader.w1wcv.mongodb.net/?retryWrites=true&w=majority&appName=jpshader';
+
+// Modo local (comentado para producción)
+// const localUrl = 'mongodb://127.0.0.1:27017';
+// const dbName = 'shadersDB';
+
+const client = new MongoClient(atlasUrl); // Cambiar entre `atlasUrl` y `localUrl` según sea necesario
+const dbName = 'jpshader'; // Este es el nombre de la base de datos que se usará
+
+const PORT = process.env.PORT || 3250;
 let db = null;
 
 // Agregar el Map para las conexiones activas
@@ -19,7 +26,7 @@ const activeConnections = new Map();
 // Función para conectar a la base de datos
 async function connectToDatabase() {
     if (db) return db;
-    
+
     try {
         await client.connect();
         console.log('Conectado a MongoDB');
@@ -31,20 +38,20 @@ async function connectToDatabase() {
     }
 }
 
-// 1. Middlewares primero
+// Middlewares
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));  // Añadido límite para shaders grandes
+app.use(express.json({ limit: '50mb' })); // Límite para shaders grandes
 
-// 2. Rutas API
+// Rutas API
 app.get('/api/shaders', async (req, res) => {
     try {
         const db = await connectToDatabase();
         const shadersCollection = db.collection('shaders');
         const shaders = await shadersCollection.find({}).toArray();
-        
+
         console.log('Endpoint /api/shaders llamado');
         console.log('Shaders encontrados:', shaders.length);
-        
+
         res.json(shaders);
     } catch (error) {
         console.error('Error en /api/shaders:', error);
@@ -60,41 +67,42 @@ app.get('/api/shaders/:nombre', async (req, res) => {
         if (shader) {
             res.json(shader);
         } else {
-            res.status(404).json({ error: 'Shader not found' });
+            res.status(404).json({ error: 'Shader no encontrado' });
         }
     } catch (error) {
-        console.error('Error fetching shader:', error);
-        res.status(500).json({ error: 'Error fetching shader' });
+        console.error('Error al obtener el shader:', error);
+        res.status(500).json({ error: 'Error al obtener el shader' });
     }
 });
 
 app.post('/api/shaders', async (req, res) => {
     try {
         const { nombre, autor, contenido } = req.body;
-        
+
         if (!nombre || !autor || !contenido) {
             return res.status(400).json({ error: 'Faltan campos requeridos' });
         }
 
         const db = await connectToDatabase();
         const shadersCollection = db.collection('shaders');
-        
+
         // Intentar actualizar si existe, sino crear nuevo
         const result = await shadersCollection.updateOne(
             { nombre: nombre },
-            { 
+            {
                 $set: {
                     autor,
                     contenido,
-                    fechaActualizacion: new Date()
-                }
+                    fechaActualizacion: new Date(),
+                },
             },
-            { upsert: true }  // Crear si no existe
+            { upsert: true } // Crear si no existe
         );
 
-        const mensaje = result.upsertedCount === 1 
-            ? 'Shader guardado exitosamente' 
-            : 'Shader actualizado exitosamente';
+        const mensaje =
+            result.upsertedCount === 1
+                ? 'Shader guardado exitosamente'
+                : 'Shader actualizado exitosamente';
 
         res.status(201).json({ message: mensaje });
     } catch (error) {
@@ -103,13 +111,14 @@ app.post('/api/shaders', async (req, res) => {
     }
 });
 
-// 3. Archivos estáticos al final
+// Archivos estáticos
 app.use(express.static('public'));
 
+// Iniciar el servidor
 async function startServer() {
     try {
         await connectToDatabase();
-        
+
         const server = http.listen(PORT, async () => {
             console.log(`Servidor corriendo en http://localhost:${PORT}`);
             try {
@@ -122,10 +131,10 @@ async function startServer() {
         // Configuración de Socket.IO
         io.on('connection', (socket) => {
             console.log('Nueva conexión:', socket.id);
-            
+
             const origin = socket.handshake.headers.origin || 'Origen desconocido';
             const isAdmin = socket.handshake.headers.referer?.includes('admin.html');
-            
+
             if (!isAdmin) {
                 const urlParams = new URLSearchParams(socket.handshake.headers.referer.split('?')[1]);
                 const shaderName = urlParams.get('shader');
@@ -140,8 +149,8 @@ async function startServer() {
                     shaderInfo: {
                         nombre: shaderName,
                         autor: '',
-                        contenido: ''
-                    }
+                        contenido: '',
+                    },
                 });
 
                 // Emitir la lista actualizada a todos los clientes
@@ -160,7 +169,7 @@ async function startServer() {
                     connection.shaderInfo = {
                         nombre: data.nombre,
                         autor: data.autor,
-                        contenido: data.contenido
+                        contenido: data.contenido,
                     };
 
                     // Emitir a todos los clientes conectados al mismo shader, excepto al que lo originó
@@ -168,7 +177,7 @@ async function startServer() {
                         id: socket.id,
                         nombre: data.nombre,
                         autor: data.autor,
-                        contenido: data.contenido
+                        contenido: data.contenido,
                     });
                 }
             });
@@ -179,14 +188,13 @@ async function startServer() {
                 io.emit('connectionsUpdate', Array.from(activeConnections.values()));
             });
         });
-
     } catch (error) {
         console.error('Error al iniciar el servidor:', error);
         process.exit(1);
     }
 }
 
-// Agregar la ruta API para conexiones
+// Ruta para conexiones activas
 app.get('/api/connections', (req, res) => {
     res.json(Array.from(activeConnections.values()));
 });

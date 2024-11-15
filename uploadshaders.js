@@ -2,9 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
 
-const url = 'mongodb://localhost:27017';
-const client = new MongoClient(url);
-const dbName = 'shadersDB';
+// Configuración de MongoDB Atlas
+const atlasUrl = 'mongodb+srv://jpupper:ayp0624@jpshader.w1wcv.mongodb.net/?retryWrites=true&w=majority&appName=jpshader';
+const client = new MongoClient(atlasUrl);
+const dbName = 'jpshader';
+
+// Configuración local (comentada)
+const localUrl = 'mongodb://localhost:27017';
+// const client = new MongoClient(localUrl);
 
 async function checkAndLoadShaders() {
     const db = client.db(dbName);
@@ -12,6 +17,10 @@ async function checkAndLoadShaders() {
     const shadersDir = path.join(__dirname, 'public', 'sh');
 
     try {
+        // Conexión a la base de datos
+        await client.connect();
+        console.log('Conectado a MongoDB');
+
         const count = await shadersCollection.countDocuments();
         if (count > 0) {
             console.log('Los shaders ya están cargados.');
@@ -28,11 +37,11 @@ async function checkAndLoadShaders() {
                 const fecha = new Date().toISOString();
 
                 try {
-                    await shadersCollection.insertOne({ 
-                        nombre, 
-                        contenido, 
+                    await shadersCollection.insertOne({
+                        nombre,
+                        contenido,
                         fecha,
-                        autor: 'Sistema'
+                        autor: 'Sistema',
                     });
                     console.log(`Shader "${nombre}" subido exitosamente.`);
                 } catch (err) {
@@ -43,9 +52,12 @@ async function checkAndLoadShaders() {
     } catch (error) {
         console.error('Error al verificar o subir shaders:', error);
         throw error;
+    } finally {
+        await client.close();
+        console.log('Conexión cerrada.');
     }
 }
 
 module.exports = {
-    checkAndLoadShaders
+    checkAndLoadShaders,
 };

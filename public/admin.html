@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Editor GLSL</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/codemirror.css">
+    <link rel="stylesheet" href="css/monokai.css">
+</head>
+<body>
+    <div id="main-container" class="admin-container">
+        <h1 class="admin-header">Panel de Administración</h1>
+        
+        <div id="total-connections">Cargando estadísticas...</div>
+        
+        <div id="connections-list">
+            <!-- Las conexiones se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

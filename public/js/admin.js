@@ -37,9 +37,9 @@ function updateConnectionsList(connections) {
                     <div class="connection-status ${conn.isEditing ? 'editing' : ''}">
                         ${conn.isEditing ? '🖊️ Editando' : '👀 Observando'}
                     </div>
-                    <div class="connection-shader">Shader: ${shaderLink}</div>
-                    <div class="connection-author">Autor: ${conn.shaderInfo ? conn.shaderInfo.autor : 'N/A'}</div>
-                    <div class="connection-content">Contenido: ${conn.shaderInfo ? conn.shaderInfo.contenido : 'N/A'}</div>
+                    <div class="connection-shader"><strong>Shader:</strong> ${shaderLink}</div>
+                    <div class="connection-author"><strong>Autor:</strong> ${conn.shaderInfo ? conn.shaderInfo.autor : 'N/A'}</div>
+                    <div class="connection-content"><strong>Contenido:</strong> ${conn.shaderInfo ? conn.shaderInfo.contenido : 'N/A'}</div>
                 </div>
                 <div class="connection-time">
                     <div>Conectado hace: ${minutes}m ${seconds}s</div>
@@ -89,4 +89,10 @@ socket.on('shaderUpdate', (data) => {
         // Llamar a updateConnectionsList para reflejar los cambios
         updateConnectionsList(Array.from(activeConnections.values()));
     }
+});
+
+socket.on('connection', (socket) => {
+    const origin = socket.handshake.headers.origin || 'Origen desconocido';
+    console.log('Nueva conexión desde:', origin);
+    // ... resto del código ...
 });

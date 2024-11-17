@@ -576,7 +576,25 @@ function enviarShaderUpdate(nombre, autor, contenido) {
         timestamp: new Date()
     });
 }
+socket.on("pedirShader",(data) =>{
+    console.log("SE CONECTO OTRO CLIENTE QUE NO SOY YO")
 
+    const shaderName = document.getElementById('shader-name').value;
+    const shaderAuthor = document.getElementById('shader-author').value;
+    const shaderContent = editor.getValue();
+    
+    // Actualizar el contenido del fullscreen editor
+    fullscreenEditor.setValue(shaderContent);
+    
+    console.log("SHADER NAME MIO" + shaderName);
+    
+    console.log("SHADER AUTHOR MIO" + shaderAuthor);
+
+    console.log("SHADER CONTENT MIO" + shaderContent);
+    // Enviar la actualización al servidor
+    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent);
+
+});
 socket.on('shaderUpdate', (data) => {
     console.log('DATOS EN EL CLIENTE RECIBIDOS:', data);
 

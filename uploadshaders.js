@@ -1,26 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const { MongoClient } = require('mongodb');
+const { connectToDatabase, closeConnection } = require('./db');
 
-// Configuración de MongoDB Atlas
-const atlasUrl = 'mongodb+srv://jpupper:ayp0624@jpshader.w1wcv.mongodb.net/?retryWrites=true&w=majority&appName=jpshader';
-const client = new MongoClient(atlasUrl);
-const dbName = 'jpshader';
-
-// Configuración local (comentada)
-const localUrl = 'mongodb://localhost:27017';
-// const client = new MongoClient(localUrl);
+const isRunningLocal = true;
 
 async function checkAndLoadShaders() {
-    const db = client.db(dbName);
+    const db = await connectToDatabase(isRunningLocal);
     const shadersCollection = db.collection('shaders');
     const shadersDir = path.join(__dirname, 'public', 'sh');
 
     try {
-        // Conexión a la base de datos
-        await client.connect();
-        console.log('Conectado a MongoDB');
-
         const count = await shadersCollection.countDocuments();
         if (count > 0) {
             console.log('Los shaders ya están cargados.');
@@ -53,8 +42,7 @@ async function checkAndLoadShaders() {
         console.error('Error al verificar o subir shaders:', error);
         throw error;
     } finally {
-        await client.close();
-        console.log('Conexión cerrada.');
+        await closeConnection();
     }
 }
 

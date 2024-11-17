@@ -2,35 +2,22 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const { MongoClient } = require('mongodb');
 const uploadShaders = require('./uploadshaders');
 const cors = require('cors');
+const { connectToDatabase, closeConnection } = require('./db');
 
-// Configuración de la base de datos
-// Modo de producción con MongoDB Atlas
-const atlasUrl = 'mongodb+srv://jpupper:ayp0624@jpshader.w1wcv.mongodb.net/?retryWrites=true&w=majority&appName=jpshader';
-
-// Modo local (comentado para producción)
-// const localUrl = 'mongodb://127.0.0.1:27017';
-// const dbName = 'shadersDB';
-
-const client = new MongoClient(atlasUrl); // Cambiar entre `atlasUrl` y `localUrl` según sea necesario
-const dbName = 'jpshader'; // Este es el nombre de la base de datos que se usará
-
+const isRunningLocal = false;
 const PORT = process.env.PORT || 3250;
 let db = null;
-
 // Agregar el Map para las conexiones activas
 const activeConnections = new Map();
 
 // Función para conectar a la base de datos
-async function connectToDatabase() {
+async function connectToDatabaseWrapper() {
     if (db) return db;
 
     try {
-        await client.connect();
-        console.log('Conectado a MongoDB');
-        db = client.db(dbName);
+        db = await connectToDatabase(isRunningLocal);
         return db;
     } catch (error) {
         console.error('Error al conectar a MongoDB:', error);
@@ -45,7 +32,7 @@ app.use(express.json({ limit: '50mb' })); // Límite para shaders grandes
 // Rutas API
 app.get('/api/shaders', async (req, res) => {
     try {
-        const db = await connectToDatabase();
+        const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
         const shaders = await shadersCollection.find({}).toArray();
 
@@ -61,7 +48,7 @@ app.get('/api/shaders', async (req, res) => {
 
 app.get('/api/shaders/:nombre', async (req, res) => {
     try {
-        const db = await connectToDatabase();
+        const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
         const shader = await shadersCollection.findOne({ nombre: req.params.nombre });
         if (shader) {
@@ -83,7 +70,7 @@ app.post('/api/shaders', async (req, res) => {
             return res.status(400).json({ error: 'Faltan campos requeridos' });
         }
 
-        const db = await connectToDatabase();
+        const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
 
         // Intentar actualizar si existe, sino crear nuevo
@@ -117,7 +104,7 @@ app.use(express.static('public'));
 // Iniciar el servidor
 async function startServer() {
     try {
-        await connectToDatabase();
+        await connectToDatabaseWrapper();
 
         const server = http.listen(PORT, async () => {
             console.log(`Servidor corriendo en http://localhost:${PORT}`);
@@ -131,9 +118,12 @@ async function startServer() {
         // Configuración de Socket.IO
         io.on('connection', (socket) => {
             console.log('Nueva conexión:', socket.id);
-
+            socket.broadcast.emit("pedirShader","holaman"); //Esto es para que ucando un nuevo cliente entra se acutaliza con el shader con el que se esta trabajando que es como la ultima sesion. 
             const origin = socket.handshake.headers.origin || 'Origen desconocido';
             const isAdmin = socket.handshake.headers.referer?.includes('admin.html');
+
+            // Variable para determinar si es una nueva conexión
+            let isNewConnection = true;
 
             if (!isAdmin) {
                 const urlParams = new URLSearchParams(socket.handshake.headers.referer.split('?')[1]);
@@ -173,12 +163,14 @@ async function startServer() {
                     };
 
                     // Emitir a todos los clientes conectados al mismo shader, excepto al que lo originó
-                    socket.broadcast.emit('shaderUpdate', {
-                        id: socket.id,
-                        nombre: data.nombre,
-                        autor: data.autor,
-                        contenido: data.contenido,
-                    });
+                    if (!isNewConnection) { // Solo emitir si no es una nueva conexión
+                        socket.broadcast.emit('shaderUpdate', {
+                            id: socket.id,
+                            nombre: data.nombre,
+                            autor: data.autor,
+                            contenido: data.contenido,
+                        });
+                    }
                 }
             });
 
@@ -187,6 +179,11 @@ async function startServer() {
                 activeConnections.delete(socket.id);
                 io.emit('connectionsUpdate', Array.from(activeConnections.values()));
             });
+
+            // Restablecer el estado de nueva conexión después de un breve retraso
+            setTimeout(() => {
+                isNewConnection = false; // Restablecer el estado después de un tiempo
+            }, 500); // Ajusta el tiempo según sea necesario
         });
     } catch (error) {
         console.error('Error al iniciar el servidor:', error);

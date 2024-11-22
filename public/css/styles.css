@@ -139,7 +139,7 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 #fullscreen-editor {
@@ -186,7 +186,7 @@ body {
 
 /* Estilos específicos para el editor en pantalla completa */
 #fullscreen-editor .CodeMirror {
-    background-color: rgba(0, 0, 0, 0.7) !important;
+    background-color: rgba(0, 0, 0, 0.0) !important;
     font-size: var(--fullscreen-font-size) !important;
 }
 
@@ -367,10 +367,14 @@ body {
 
 /* Estilos para la página de administración */
 .admin-container {
-    width: 95%;
-    max-width: 1600px;
-    margin: 20px auto;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
     font-family: 'Arial', sans-serif;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
 }
 
 .admin-header {
@@ -378,6 +382,7 @@ body {
     text-align: center;
     margin-bottom: 20px;
     font-size: 2em;
+    margin-top: 42px;
 }
 
 #connections-list {
@@ -454,4 +459,432 @@ body {
     color: var(--text-color);
     opacity: 0.7;
     font-size: 0.9em;
+}
+
+.shader-container {
+    display: flex;
+    flex-direction: column; /* Organizar los elementos en columna */
+    align-items: center; /* Centrar los elementos */
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    text-align: center; /* Centrar el texto */
+    transition: border-color 0.3s ease; /* Transición suave para el borde */
+    text-decoration: none; /* Sin subrayado */
+    color: inherit; /* Heredar el color del contenedor */
+}
+
+.shader-container:hover {
+    border-color: var(--hover-color); /* Cambiar el color del borde al hacer hover */
+}
+
+.shader-author {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.shader-content {
+    white-space: pre-wrap; /* Mantener el formato del código */
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 3px;
+    overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
+}
+
+/* Estilos para la lista de shaders */
+#shaders-list {
+    display: grid; /* Usar grid para organizar los shaders */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Crear columnas responsivas con un ancho mínimo de 150px */
+    gap: 20px; /* Espacio entre los elementos de la grilla */
+    padding: 10px;
+    max-height: 80vh; /* Altura máxima para permitir el desplazamiento */
+    overflow-y: auto; /* Permitir desplazamiento vertical */
+    border: 1px solid var(--border-color); /* Opcional: agregar un borde */
+    border-radius: 5px; /* Opcional: bordes redondeados */
+    background-color: rgba(255, 255, 255, 0.1); /* Opcional: fondo semitransparente */
+    width: 100%; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
+    max-width: 100%; /* Asegúrate de que no exceda el ancho del dispositivo */
+    margin: 0 auto; /* Centrar el contenedor en la página */
+}
+
+.shader-image {
+    width: 100px; /* Limitar el ancho de la imagen */
+    height: 100px; /* Limitar la altura de la imagen */
+    object-fit: cover; /* Mantener la proporción de la imagen */
+    border-radius: 5px; /* Bordes redondeados para la imagen */
+}
+
+.shader-author {
+    font-weight: bold;
+    margin-top: 5px;
+    color: var(--text-color); /* Color del texto del autor */
+}
+
+.shader-link {
+    color: var(--primary-color); /* Color del texto del nombre del shader */
+    text-decoration: none; /* Sin subrayado */
+    font-weight: bold; /* Negrita para el nombre del shader */
+}
+
+.shader-link:hover {
+    text-decoration: none; /* Sin subrayado al pasar el mouse */
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 600px) {
+    #shaders-list {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Columnas más pequeñas en móviles */
+    }
+}
+
+/* Estilos para la lista de shaders del usuario */
+#my-shaders-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.shader-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.shader-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.shader-info h3 {
+    margin: 0 0 5px 0;
+    color: var(--primary-color);
+}
+
+.shader-info p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #888;
+}
+
+.shader-actions .edit-button {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.shader-actions .edit-button:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-1px);
+}
+
+.no-shaders {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Estilos para el cuadro de diálogo de inicio de sesión */
+#login-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 300px; /* Ancho fijo para el modal */
+}
+
+/* Estilo para el botón de inicio de sesión */
+#login-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#signup-button {
+    padding: 10px; /* Añadido padding */
+    background-color: var(--button-bg); /* Añadido color de fondo */
+    color: var(--text-color); /* Añadido color de texto */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero */
+    transition: background-color 0.3s ease; /* Transición suave */
+    margin-top: 10px; /* Añadido margen superior */
+}
+
+#signup-button:hover {
+    background-color: var(--hover-color); /* Color al pasar el mouse */
+}
+
+/* Corregir el ancho de los campos de texto */
+#login-form input {
+    width: calc(100% - 22px); /* Ajustar el ancho para que no exceda */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+#login-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilo para el botón de envío en el formulario de inicio de sesión */
+#login-form button {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease;
+    margin-top: 10px; /* Añadido margen superior para los botones */
+}
+
+#login-form button:hover {
+    background-color: var(--hover-color);
+}
+
+/* Estilo para el overlay */
+#overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+#login-form button, #register-form button {
+    margin-top: 10px; /* Añadido margen superior para los botones */
+}
+
+/* Estilo para los botones de los formularios */
+#login-form button, #register-form button, #signup-button, #back-to-login-button {
+    margin-top: 10px; /* Añadido margen superior para los botones */
+    padding: 10px; /* Añadido padding */
+    background-color: var(--button-bg); /* Añadido color de fondo */
+    color: var(--text-color); /* Añadido color de texto */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+#signup-button:hover, #back-to-login-button:hover {
+    background-color: var(--hover-color); /* Color al pasar el mouse */
+}
+
+/* Corregir el ancho de los campos de texto */
+#login-form input, #register-form input {
+    width: calc(100% - 22px); /* Ajustar el ancho para que no exceda */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+#login-form input::placeholder, #register-form input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilo para el modal de registro */
+#register-modal {
+    display: none; /* Inicialmente oculto */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 300px; /* Ancho fijo para el modal */
+}
+
+/* Estilo para el botón de registro */
+#register-button {
+    position: absolute;
+    top: 10px;
+    right: 125px; /* Ajustar la posición */
+    padding: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Estilo para los botones de inicio de sesión y registro */
+#login-button, #register-button {
+    margin: 10px; /* Añadir margen para separar los botones */
+}
+
+/* Estilo para el enlace que abre en una nueva pestaña */
+.shader-card {
+    padding: 10px;
+    text-decoration: none; /* Sin subrayado */
+    color: inherit; /* Heredar el color del contenedor */
+}
+
+/* Contenedor para los botones */
+#button-container {
+    display: flex;
+    justify-content: flex-end; /* Alinear los botones a la derecha */
+    margin-bottom: 20px; /* Espacio entre los botones y la lista de shaders */
+}
+
+/* Estilos para la página de usuario */
+.user-container {
+    max-width: 800px; /* Ancho máximo para la página de usuario */
+    width: 100%;
+    margin: 0 auto; /* Centrar el contenedor */
+    padding: 20px; /* Espaciado interno */
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para el contenedor */
+}
+
+.user-header {
+    color: var(--primary-color); /* Color del encabezado */
+    text-align: center; /* Centrar el texto */
+    margin-bottom: 20px; /* Espacio debajo del encabezado */
+    font-size: 2em; /* Tamaño de fuente del encabezado */
+}
+
+#profile-section {
+    margin-bottom: 30px; /* Espacio debajo de la sección de perfil */
+    padding: 15px; /* Espaciado interno */
+    border: 1px solid var(--border-color); /* Borde para la sección de perfil */
+    border-radius: 5px; /* Bordes redondeados */
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+}
+
+#profile-section label {
+    display: block; /* Hacer que las etiquetas ocupen toda la línea */
+    margin-bottom: 5px; /* Espacio debajo de las etiquetas */
+    color: var(--text-color); /* Color del texto */
+}
+
+#profile-section input[type="text"],
+#profile-section textarea,
+#profile-section input[type="file"] {
+    width: 100%; /* Ancho completo */
+    padding: 10px; /* Espaciado interno */
+    margin-bottom: 15px; /* Espacio debajo de los campos */
+    border: 1px solid var(--border-color); /* Borde */
+    border-radius: 5px; /* Bordes redondeados */
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+    color: rgba(255, 255, 255, 0.9); /* Cambiado a un blanco más brillante */
+}
+
+#profile-section input[type="file"] {
+    color: rgba(255, 255, 255, 0.9); /* Cambiado a un blanco más brillante */
+}
+
+#profile-section input::placeholder,
+#profile-section textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* Color del placeholder más claro */
+}
+
+#profile-section button {
+    background-color: var(--button-bg); /* Color de fondo del botón */
+    color: var(--text-color); /* Color del texto del botón */
+    padding: 10px; /* Espaciado interno */
+    border: none; /* Sin borde */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+#profile-section button:hover {
+    background-color: var(--hover-color); /* Color al pasar el mouse */
+}
+
+#shaders-section {
+    padding: 15px; /* Espaciado interno */
+    border: 1px solid var(--border-color); /* Borde para la sección de shaders */
+    border-radius: 5px; /* Bordes redondeados */
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+}
+
+#shaders-section h2 {
+    color: var(--primary-color); /* Color del encabezado de shaders */
+    margin-bottom: 10px; /* Espacio debajo del encabezado */
+}
+
+#my-shaders-list {
+    list-style-type: none; /* Sin viñetas */
+    padding: 0; /* Sin padding */
+}
+
+#my-shaders-list li {
+    padding: 10px; /* Espaciado interno */
+    border: 1px solid var(--border-color); /* Borde para cada shader */
+    border-radius: 5px; /* Bordes redondeados */
+    margin-bottom: 10px; /* Espacio entre shaders */
+    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
+    color: var(--text-color); /* Color del texto */
+}
+
+/* Estilos para el botón de acción */
+.action-button {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.action-button:hover {
+    background-color: var(--hover-color);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+}
+
+.action-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }

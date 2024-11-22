@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Usuario</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/userconnections.js" defer></script>
+</head>
+<body>
+    <div id="main-container" class="user-container">
+        <h1 class="user-header">Perfil de Usuario</h1>
+        
+        <div id="profile-section">
+            <h2>Bienvenido, <span id="username-display"></span>!</h2>
+          
+            <label for="description">Descripción:</label>
+            <textarea id="description" placeholder="Escribe una breve descripción sobre ti"></textarea>
+
+            <label for="profile-pic">Subir Foto de Perfil:</label>
+            <input type="file" id="profile-pic" accept="image/*">
+
+            <button id="save-profile">Guardar Perfil</button>
+        </div>
+
+        <div id="shader-actions">
+            <button id="create-shader" class="action-button">Crear Nuevo Shader</button>
+        </div>
+
+        <div id="shaders-section">
+            <h2>Mis Shaders</h2>
+            <ul id="my-shaders-list">
+                <!-- Aquí se cargarán los shaders del usuario -->
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

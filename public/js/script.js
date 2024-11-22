@@ -56,11 +56,11 @@ function inicializarElementosDOM() {
     const saveButtonFullscreen = document.getElementById('save-shader-fullscreen');
     
     if (saveButton) {
-        saveButton.addEventListener('click', guardarShader);
+        saveButton.addEventListener('click', saveShader);
     }
     
     if (saveButtonFullscreen) {
-        saveButtonFullscreen.addEventListener('click', guardarShader);
+        saveButtonFullscreen.addEventListener('click', saveShader);
     }
 }
 
@@ -126,14 +126,33 @@ function configurarEventos() {
 async function cargarShaderDesdeURL() {
     const params = new URLSearchParams(window.location.search);
     const shaderName = params.get('shader') || 'default';
+    const isNewShader = params.get('newShader') === 'true';
     
     try {
-        const response = await fetch(`/api/shaders/${shaderName}`);
-        if (!response.ok) {
-            throw new Error(`No se pudo cargar el shader ${shaderName}`);
-        }
+        let shader;
         
-        const shader = await response.json();
+        if (isNewShader) {
+            // Para un nuevo shader, usar el contenido del shader default
+            const defaultResponse = await fetch('/api/shaders/default');
+            if (!defaultResponse.ok) {
+                throw new Error('No se pudo cargar el shader default');
+            }
+            const defaultShader = await defaultResponse.json();
+            
+            // Crear un nuevo shader con el contenido default
+            shader = {
+                nombre: shaderName,
+                autor: localStorage.getItem('username') || 'Anónimo',
+                contenido: defaultShader.contenido
+            };
+        } else {
+            // Cargar shader existente
+            const response = await fetch(`/api/shaders/${shaderName}`);
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar el shader ${shaderName}`);
+            }
+            shader = await response.json();
+        }
         
         // Actualizar campos de nombre y autor
         ['', '-fullscreen'].forEach(suffix => {
@@ -403,15 +422,18 @@ function toggleEditor() {
     const editorElement = document.getElementById('fullscreen-editor-container');
     const toggleButton = document.getElementById('toggle-editor');
     const openButton = document.getElementById('open-editor');
+    const shaderSaveControls = document.getElementById('shader-controls-fullscreen');
 
     if (editorElement.style.display !== 'none') {
         editorElement.style.display = 'none';
         toggleButton.style.display = 'none';
         openButton.style.display = 'block';
+        shaderSaveControls.style.display = 'none';
     } else {
         editorElement.style.display = 'flex';
         toggleButton.style.display = 'block';
         openButton.style.display = 'none';
+        shaderSaveControls.style.display = 'flex';
     }
 }
 
@@ -503,38 +525,56 @@ function setActiveShader(event) {
 
 window.addEventListener('resize', manejarCambioOrientacion);
 
-async function guardarShader() {
-    const nombre = document.getElementById('shader-name').value;
-    const autor = document.getElementById('shader-author').value;
-    const contenido = editor.getValue();
+async function saveShader() {
+    const shaderName = document.getElementById('shader-name').value;
+    const userName = document.getElementById('shader-author').value;
+    const shaderContent = editor.getValue();
+    const isNewShader = new URLSearchParams(window.location.search).get('newShader') === 'true';
 
-    fetch('/api/shaders', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ nombre, autor, contenido })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error al guardar el shader');
+    if (!shaderName || !userName || !shaderContent) {
+        alert('Por favor completa todos los campos');
+        return;
+    }
+
+    try {
+        // Si es un nuevo shader, verificar si ya existe uno con ese nombre
+        if (isNewShader) {
+            const checkResponse = await fetch(`/api/shader-exists/${shaderName}`);
+            const checkResult = await checkResponse.json();
+            
+            if (checkResult.exists) {
+                alert('Ya existe un shader con ese nombre. Por favor elige otro nombre.');
+                return;
+            }
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data.message);
-        // Emitir información del shader modificado, incluyendo el contenido
-        socket.emit('shaderUpdate', {
-            id: socket.id,
-            nombre: nombre,
-            autor: autor,
-            contenido: contenido,
-            timestamp: new Date()
+
+        const response = await fetch('/api/shaders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nombre: shaderName,
+                autor: userName,
+                contenido: shaderContent
+            })
         });
-    })
-    .catch(error => {
-        console.error('Error al guardar el shader:', error);
-    });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('Shader guardado exitosamente');
+            // Actualizar la URL para quitar el parámetro newShader
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('newShader');
+            window.history.replaceState({}, '', newUrl);
+        } else {
+            alert(result.error || 'Error al guardar el shader');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el shader');
+    }
 }
 
 window.addEventListener('popstate', (event) => {
@@ -643,4 +683,29 @@ fullscreenEditor.on("keydown", (instance, event) => {
         // Enviar la actualización al servidor
         enviarShaderUpdate(shaderName, shaderAuthor, shaderContent);
     
+});
+
+document.getElementById('save-button').addEventListener('click', async () => {
+    const canvas = document.getElementById('yourCanvasId'); // Cambia esto por el ID de tu canvas
+    const dataURL = canvas.toDataURL('image/png'); // Convierte el canvas a una URL de datos
+
+    try {
+        const response = await fetch('/api/save-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: dataURL }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message); // Mensaje de éxito
+        } else {
+            alert(data.message); // Mensaje de error
+        }
+    } catch (error) {
+        console.error('Error al guardar la imagen:', error);
+        alert('Error al guardar la imagen');
+    }
 });

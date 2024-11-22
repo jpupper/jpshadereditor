@@ -42,7 +42,7 @@ body {
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 
 .container {
@@ -182,6 +182,29 @@ body {
     height: 100% !important;
     border-radius: 5px;
     font-size: 14px;
+}
+
+/* Estilos para el cursor del editor */
+.CodeMirror-cursor {
+    border-left: 2px solid #00ff00 !important;
+    border-right: none;
+    width: 2px;
+    height: 20px !important;
+}
+
+.CodeMirror .CodeMirror-cursors {
+    z-index: 3;
+}
+
+/* Estilo para el cursor cuando el editor está enfocado */
+.CodeMirror-focused .CodeMirror-cursor {
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
 }
 
 /* Estilos específicos para el editor en pantalla completa */
@@ -542,61 +565,69 @@ body {
 #my-shaders-list {
     list-style: none;
     padding: 0;
-    margin: 20px 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .shader-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 8px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 15px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s ease;
-}
-
-.shader-item:hover {
-    background: rgba(0, 0, 0, 0.5);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.shader-info h3 {
-    margin: 0 0 5px 0;
-    color: var(--primary-color);
-}
-
-.shader-info p {
-    margin: 0;
-    font-size: 0.9em;
-    color: #888;
-}
-
-.shader-actions .edit-button {
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: none;
     border-radius: 4px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    gap: 15px;
 }
 
-.shader-actions .edit-button:hover {
-    background-color: var(--hover-color);
-    transform: translateY(-1px);
+.shader-preview {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 5px;
 }
 
-.no-shaders {
-    text-align: center;
+.title-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.shader-title {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.1em;
+}
+
+.update-date {
     color: #888;
-    padding: 20px;
-    font-style: italic;
+    font-size: 0.75em;
 }
 
-/* Estilos para el cuadro de diálogo de inicio de sesión */
+.edit-shader-btn {
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    height: 26px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+}
+
+.edit-shader-btn:hover {
+    background-color: var(--hover-color);
+}
+
+/* Estilo para el cuadro de diálogo de inicio de sesión */
 #login-modal {
     display: none;
     position: fixed;
@@ -773,13 +804,50 @@ body {
 
 /* Estilos para la página de usuario */
 .user-container {
-    max-width: 800px; /* Ancho máximo para la página de usuario */
     width: 100%;
-    margin: 0 auto; /* Centrar el contenedor */
-    padding: 20px; /* Espaciado interno */
-    background-color: rgba(255, 255, 255, 0.1); /* Fondo semitransparente */
-    border-radius: 8px; /* Bordes redondeados */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra para el contenedor */
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#my-shaders-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.shader-preview {
+    width: 75px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.shader-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.shader-info {
+    flex: 1;
+}
+
+.shader-title {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+
+.shader-description {
+    margin: 0;
+    color: var(--text-color);
 }
 
 .user-header {

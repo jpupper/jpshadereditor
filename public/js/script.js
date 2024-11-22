@@ -529,7 +529,6 @@ async function saveShader() {
     const shaderName = document.getElementById('shader-name').value;
     const userName = document.getElementById('shader-author').value;
     const shaderContent = editor.getValue();
-    const isNewShader = new URLSearchParams(window.location.search).get('newShader') === 'true';
 
     if (!shaderName || !userName || !shaderContent) {
         alert('Por favor completa todos los campos');
@@ -537,17 +536,7 @@ async function saveShader() {
     }
 
     try {
-        // Si es un nuevo shader, verificar si ya existe uno con ese nombre
-        if (isNewShader) {
-            const checkResponse = await fetch(`/api/shader-exists/${shaderName}`);
-            const checkResult = await checkResponse.json();
-            
-            if (checkResult.exists) {
-                alert('Ya existe un shader con ese nombre. Por favor elige otro nombre.');
-                return;
-            }
-        }
-
+        // Guardar el shader
         const response = await fetch('/api/shaders', {
             method: 'POST',
             headers: {
@@ -562,15 +551,43 @@ async function saveShader() {
 
         const result = await response.json();
         
-        if (response.ok) {
-            alert('Shader guardado exitosamente');
-            // Actualizar la URL para quitar el parámetro newShader
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('newShader');
-            window.history.replaceState({}, '', newUrl);
-        } else {
+        if (!response.ok) {
             alert(result.error || 'Error al guardar el shader');
+            return;
         }
+
+        // Capturar y guardar la imagen del canvas
+        const currentCanvas = isFullscreen ? 
+            document.getElementById('glsl-canvas-fullscreen') : 
+            document.getElementById('glsl-canvas');
+            
+        const dataURL = currentCanvas.toDataURL('image/png'); // Convierte el canvas a una URL de datos
+
+        try {
+            const response = await fetch('/api/save-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: dataURL }),
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert(data.message); // Mensaje de éxito
+            } else {
+                alert(data.message); // Mensaje de error
+            }
+        } catch (error) {
+            console.error('Error al guardar la imagen:', error);
+            alert('Error al guardar la imagen');
+        }
+
+        // Actualizar la URL para quitar el parámetro newShader
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('newShader');
+        window.history.replaceState({}, '', newUrl);
     } catch (error) {
         console.error('Error:', error);
         alert('Error al guardar el shader');
@@ -607,15 +624,17 @@ function compartirShader() {
     }
 }
 
-function enviarShaderUpdate(nombre, autor, contenido) {
+function enviarShaderUpdate(nombre, autor, contenido, cursorPos) {
     socket.emit('shaderUpdate', {
         id: socket.id,
         nombre: nombre,
         autor: autor,
         contenido: contenido,
+        cursorPos: cursorPos,
         timestamp: new Date()
     });
 }
+
 socket.on("pedirShader",(data) =>{
     console.log("SE CONECTO OTRO CLIENTE QUE NO SOY YO")
 
@@ -632,9 +651,10 @@ socket.on("pedirShader",(data) =>{
 
     console.log("SHADER CONTENT MIO" + shaderContent);
     // Enviar la actualización al servidor
-    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent);
+    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, editor.getCursor());
 
 });
+
 socket.on('shaderUpdate', (data) => {
     console.log('DATOS EN EL CLIENTE RECIBIDOS:', data);
 
@@ -646,11 +666,21 @@ socket.on('shaderUpdate', (data) => {
         console.log("EL SHADER ES : " + data.contenido);
 
         // Evitar el feedback loop
-        isBroadcastingUpdate = true; // Activar el modo de broadcast
+        isBroadcastingUpdate = true;
+        
+        // Guardar posición actual del cursor
+        const currentCursor = editor.getCursor();
+        const currentFullscreenCursor = fullscreenEditor.getCursor();
+        
+        // Actualizar contenido
         editor.setValue(data.contenido);
         fullscreenEditor.setValue(data.contenido);
-        isBroadcastingUpdate = false; // Desactivar el modo de broadcast
-
+        
+        // Restaurar posición del cursor
+        editor.setCursor(currentCursor);
+        fullscreenEditor.setCursor(currentFullscreenCursor);
+        
+        isBroadcastingUpdate = false;
     } else {
         console.log("NO COINCIDE EL NOMBRE");
     }
@@ -658,54 +688,30 @@ socket.on('shaderUpdate', (data) => {
 
 // Emitir evento cuando se modifica el contenido del shader desde el teclado
 editor.on("keydown", (instance, event) => {
-        const shaderName = document.getElementById('shader-name').value;
-        const shaderAuthor = document.getElementById('shader-author').value;
-        const shaderContent = editor.getValue();
-        
-        // Actualizar el contenido del fullscreen editor
-        fullscreenEditor.setValue(shaderContent);
-        
-        // Enviar la actualización al servidor
-        enviarShaderUpdate(shaderName, shaderAuthor, shaderContent);
+    const shaderName = document.getElementById('shader-name').value;
+    const shaderAuthor = document.getElementById('shader-author').value;
+    const shaderContent = editor.getValue();
+    const cursorPos = editor.getCursor();
     
+    // Actualizar el contenido del fullscreen editor
+    fullscreenEditor.setValue(shaderContent);
+    fullscreenEditor.setCursor(cursorPos);
+    
+    // Enviar la actualización al servidor
+    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
 });
 
 // Emitir evento cuando se modifica el contenido del fullscreen editor desde el teclado
 fullscreenEditor.on("keydown", (instance, event) => {
-  
-        const shaderName = document.getElementById('shader-name-fullscreen').value;
-        const shaderAuthor = document.getElementById('shader-author-fullscreen').value;
-        const shaderContent = fullscreenEditor.getValue();
-        
-        // Actualizar el contenido del editor común
-        editor.setValue(shaderContent);
-        
-        // Enviar la actualización al servidor
-        enviarShaderUpdate(shaderName, shaderAuthor, shaderContent);
+    const shaderName = document.getElementById('shader-name-fullscreen').value;
+    const shaderAuthor = document.getElementById('shader-author-fullscreen').value;
+    const shaderContent = fullscreenEditor.getValue();
+    const cursorPos = fullscreenEditor.getCursor();
     
-});
-
-document.getElementById('save-button').addEventListener('click', async () => {
-    const canvas = document.getElementById('yourCanvasId'); // Cambia esto por el ID de tu canvas
-    const dataURL = canvas.toDataURL('image/png'); // Convierte el canvas a una URL de datos
-
-    try {
-        const response = await fetch('/api/save-image', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image: dataURL }),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert(data.message); // Mensaje de éxito
-        } else {
-            alert(data.message); // Mensaje de error
-        }
-    } catch (error) {
-        console.error('Error al guardar la imagen:', error);
-        alert('Error al guardar la imagen');
-    }
+    // Actualizar el contenido del editor común
+    editor.setValue(shaderContent);
+    editor.setCursor(cursorPos);
+    
+    // Enviar la actualización al servidor
+    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
 });

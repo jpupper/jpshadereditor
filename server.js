@@ -88,22 +88,14 @@ app.post('/api/shaders', async (req, res) => {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
 
-        // Verificar si ya existe un shader con ese nombre
-        const existingShader = await shadersCollection.findOne({ nombre: nombre });
-        if (existingShader) {
-            return res.status(409).json({ error: 'Ya existe un shader con ese nombre' });
-        }
+        // Actualizar si existe, insertar si no existe (upsert)
+        const result = await shadersCollection.updateOne(
+            { nombre: nombre },
+            { $set: { nombre, autor, contenido } },
+            { upsert: true }
+        );
 
-        // Crear nuevo shader
-        const result = await shadersCollection.insertOne({
-            nombre,
-            autor,
-            contenido,
-            fechaCreacion: new Date(),
-            fechaActualizacion: new Date()
-        });
-
-        res.status(201).json({ message: 'Shader guardado exitosamente', id: result.insertedId });
+        res.status(201).json({ message: 'Shader guardado exitosamente', id: result.upsertedId || result.matchedCount });
     } catch (error) {
         console.error('Error al guardar el shader:', error);
         res.status(500).json({ error: 'Error al guardar el shader' });

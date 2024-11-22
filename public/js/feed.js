@@ -7,47 +7,53 @@ async function loadShaders() {
         }
         const shaders = await response.json();
         const shadersList = document.getElementById('shaders-list');
+        shadersList.className = 'shader-container';
 
         shaders.forEach(shader => {
-            const shaderContainer = document.createElement('div');
-            shaderContainer.className = 'shader-container'; // Clase para el contenedor del shader
+            const shaderCard = document.createElement('a');
+            shaderCard.href = `/shader.html?shader=${encodeURIComponent(shader.nombre)}`;
+            shaderCard.className = 'shader-card';
 
-            const shaderLink = document.createElement('a');
-            shaderLink.href = `/shader.html?shader=${encodeURIComponent(shader.nombre)}`; // Cambia la URL según sea necesario
-            shaderLink.className = 'shader-link'; // Clase para el enlace del shader
-
-            const shaderTitle = document.createElement('h3');
-            shaderTitle.textContent = shader.nombre; // Título del shader
-            shaderTitle.className = 'shader-title'; // Clase para el título
-
-            const shaderAuthor = document.createElement('div');
-            shaderAuthor.textContent = `Autor: ${shader.autor}`;
-            shaderAuthor.className = 'shader-author'; // Clase para el autor
-
-            // Crear un elemento de imagen para mostrar el preview
-            const shaderImage = document.createElement('img');
-            shaderImage.src = `img/previews/${shader.nombre}.png`; // Ruta de la imagen
-            shaderImage.alt = `Preview de ${shader.nombre}`; // Texto alternativo
-            shaderImage.className = 'shader-image'; // Clase para la imagen
-            shaderImage.onerror = () => {
-                // Si la imagen no se encuentra, mostrar una imagen de marcador de posición
-                shaderImage.src = 'img/previews/placeholder.png'; // Asegúrate de tener un placeholder
+            // Crear la sección de preview
+            const preview = document.createElement('div');
+            preview.className = 'shader-preview';
+            const previewImg = document.createElement('img');
+            previewImg.src = `img/previews/${shader.nombre}.png`;
+            previewImg.alt = `Preview de ${shader.nombre}`;
+            previewImg.onerror = () => {
+                previewImg.src = 'img/previews/placeholder.png';
             };
+            preview.appendChild(previewImg);
 
-            // Agregar los elementos al enlace
-            shaderLink.appendChild(shaderTitle);
-            shaderLink.appendChild(shaderAuthor);
-            shaderLink.appendChild(shaderImage);
+            // Crear la sección de información
+            const info = document.createElement('div');
+            info.className = 'shader-info';
 
-            // Agregar el enlace al contenedor
-            shaderContainer.appendChild(shaderLink);
-            shadersList.appendChild(shaderContainer);
+            const title = document.createElement('h3');
+            title.className = 'shader-title';
+            title.textContent = shader.nombre;
+
+            const author = document.createElement('div');
+            author.className = 'shader-author';
+            author.textContent = `Por: ${shader.autor}`;
+
+            info.appendChild(title);
+            info.appendChild(author);
+
+            // Agregar todo a la tarjeta
+            shaderCard.appendChild(preview);
+            shaderCard.appendChild(info);
+
+            shadersList.appendChild(shaderCard);
         });
     } catch (error) {
         console.error('Error al cargar la lista de shaders:', error);
-        document.getElementById('shaders-list').textContent = 'Error al cargar shaders.';
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = 'Error al cargar shaders.';
+        document.getElementById('shaders-list').appendChild(errorMessage);
     }
 }
 
 // Cargar shaders al cargar la página
-window.onload = loadShaders;
+document.addEventListener('DOMContentLoaded', loadShaders);

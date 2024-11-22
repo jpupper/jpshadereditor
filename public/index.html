@@ -7,46 +7,15 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div id="overlay"></div>
-    
-    <!-- Modal de inicio de sesión -->
-    <div id="login-modal">
-        <h2 id="modal-title">Iniciar Sesión</h2>
-        <form id="login-form">
-            <input type="text" placeholder="Usuario" required>
-            <input type="password" placeholder="Contraseña" required>
-            <button type="submit">Iniciar Sesión</button>
-        </form>
-        <button id="signup-button">Registrarse</button>
-    </div>
-
-    <!-- Modal de registro -->
-    <div id="register-modal" style="display: none;">
-        <h2>Registro</h2>
-        <form id="register-form">
-            <input type="text" placeholder="Usuario" required>
-            <input type="email" placeholder="Correo" required>
-            <input type="password" placeholder="Contraseña" required>
-            <button type="submit">Registrarse</button>
-        </form>
-        <button id="back-to-login-button">Volver a Iniciar Sesión</button>
-    </div>
-
     <div id="main-container" class="admin-container">
         <h1 class="admin-header">Lista de Shaders</h1>
-        
-        <!-- Contenedor para los botones -->
-        <div id="button-container">
-            <button id="login-button">Iniciar Sesión</button>
-            <button id="register-button">Registrarse</button>
-        </div>
-
         <div id="shaders-list">
             <!-- La lista de shaders se cargará aquí dinámicamente -->
         </div>
     </div>
 
-    <script src="js/feed.js"></script>
+    <script src="js/auth-ui.js"></script>
     <script src="js/userconnections.js"></script>
+    <script src="js/feed.js"></script>
 </body>
-</html> 
+</html>

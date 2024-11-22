@@ -390,22 +390,18 @@ body {
 
 /* Estilos para la página de administración */
 .admin-container {
-    max-width: 1200px;
-    width: 100%;
+    max-width: 1600px;
     margin: 0 auto;
-    font-family: 'Arial', sans-serif;
-    height: auto;
-    display: flex;
-    flex-direction: column;
     padding: 20px;
 }
 
 .admin-header {
-    color: var(--primary-color);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
     text-align: center;
-    margin-bottom: 20px;
-    font-size: 2em;
-    margin-top: 42px;
+    letter-spacing: 0.5px;
 }
 
 #connections-list {
@@ -485,37 +481,139 @@ body {
 }
 
 .shader-container {
-    display: flex;
-    flex-direction: column; /* Organizar los elementos en columna */
-    align-items: center; /* Centrar los elementos */
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-    text-align: center; /* Centrar el texto */
-    transition: border-color 0.3s ease; /* Transición suave para el borde */
-    text-decoration: none; /* Sin subrayado */
-    color: inherit; /* Heredar el color del contenedor */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.shader-container:hover {
-    border-color: var(--hover-color); /* Cambiar el color del borde al hacer hover */
+.shader-card {
+    background: rgba(30, 30, 30, 0.6);
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    /* gap: 12px; */
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+    /* width: 50%; */
+}
+
+.shader-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(40, 40, 40, 0.7);
+}
+
+.shader-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--hover-color));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.shader-card:hover::before {
+    opacity: 1;
+}
+
+.shader-preview {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0px auto;
+}
+
+.shader-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.shader-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    margin-top: 12px;
+}
+
+.shader-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .shader-author {
-    font-weight: bold;
-    margin-top: 5px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
 }
 
-.shader-content {
-    white-space: pre-wrap; /* Mantener el formato del código */
-    background-color: rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    border-radius: 3px;
-    overflow-x: auto; /* Permitir desplazamiento horizontal si es necesario */
+.shader-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Estilos para la lista de shaders */
+.shader-author {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shader-author img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.shader-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat i {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
 #shaders-list {
     display: grid; /* Usar grid para organizar los shaders */
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Crear columnas responsivas con un ancho mínimo de 150px */
@@ -526,7 +624,7 @@ body {
     border: 1px solid var(--border-color); /* Opcional: agregar un borde */
     border-radius: 5px; /* Opcional: bordes redondeados */
     background-color: rgba(255, 255, 255, 0.1); /* Opcional: fondo semitransparente */
-    width: 100%; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
+    width: 100vw; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
     max-width: 100%; /* Asegúrate de que no exceda el ancho del dispositivo */
     margin: 0 auto; /* Centrar el contenedor en la página */
 }
@@ -534,13 +632,13 @@ body {
 .shader-image {
     width: 100px; /* Limitar el ancho de la imagen */
     height: 100px; /* Limitar la altura de la imagen */
-    object-fit: cover; /* Mantener la proporción de la imagen */
+    object-fit: contain; /* Mantener la proporción de la imagen */
     border-radius: 5px; /* Bordes redondeados para la imagen */
 }
 
 .shader-author {
     font-weight: bold;
-    margin-top: 5px;
+    /* margin-top: 5px; */
     color: var(--text-color); /* Color del texto del autor */
 }
 
@@ -582,11 +680,12 @@ body {
     gap: 15px;
 }
 
-.shader-preview {
+.user-shader-preview {
     width: 75px;
     height: 75px;
     object-fit: cover;
     border-radius: 5px;
+    /* margin: 0px auto; */
 }
 
 .title-container {
@@ -628,84 +727,142 @@ body {
 }
 
 /* Estilo para el cuadro de diálogo de inicio de sesión */
-#login-modal {
+#auth-container {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+
+.auth-buttons {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    padding: 4px;
+    min-width: 80px;
+}
+
+.auth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.auth-button {
+    width: 80px;
+    height: 32px;
+    padding: 5px 0;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.auth-button:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.user-info {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-color);
+    font-size: 10px;
+    padding: 2px;
+}
+
+.username-display {
+    text-align: center;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Estilos para los modales */
+.modal {
     display: none;
     position: fixed;
-    top: 50%;
+    z-index: 1002;
     left: 50%;
+    top: 50%;
     transform: translate(-50%, -50%);
     background-color: var(--background-color);
     border: 1px solid var(--border-color);
-    padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    width: 300px; /* Ancho fijo para el modal */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px;
 }
 
-/* Estilo para el botón de inicio de sesión */
-#login-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.modal-content {
+    padding: 20px;
 }
 
-#signup-button {
-    padding: 10px; /* Añadido padding */
-    background-color: var(--button-bg); /* Añadido color de fondo */
-    color: var(--text-color); /* Añadido color de texto */
-    border: none; /* Sin borde */
-    border-radius: 5px; /* Bordes redondeados */
-    cursor: pointer; /* Cursor de puntero */
-    transition: background-color 0.3s ease; /* Transición suave */
-    margin-top: 10px; /* Añadido margen superior */
+.modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 16px;
 }
 
-#signup-button:hover {
-    background-color: var(--hover-color); /* Color al pasar el mouse */
+.modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-/* Corregir el ancho de los campos de texto */
-#login-form input {
-    width: calc(100% - 22px); /* Ajustar el ancho para que no exceda */
-    padding: 10px;
-    margin: 10px 0;
+.modal input {
+    height: 32px;
+    padding: 0 10px;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
+    border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
-    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
 }
 
-#login-form input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* Estilo para el botón de envío en el formulario de inicio de sesión */
-#login-form button {
+.modal-button {
+    height: 32px;
+    padding: 0;
     background-color: var(--button-bg);
     color: var(--text-color);
-    padding: 10px;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
+    transition: all 0.2s ease;
     width: 100%;
-    transition: background-color 0.3s ease;
-    margin-top: 10px; /* Añadido margen superior para los botones */
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-#login-form button:hover {
+.modal-button:hover {
     background-color: var(--hover-color);
 }
 
-/* Estilo para el overlay */
+.modal-button.secondary {
+    background-color: transparent;
+    border: 1px solid var(--button-bg);
+    margin-top: 8px;
+}
+
+.modal-button.secondary:hover {
+    background-color: var(--button-bg);
+}
+
 #overlay {
     display: none;
     position: fixed;
@@ -713,93 +870,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-}
-
-#login-form button, #register-form button {
-    margin-top: 10px; /* Añadido margen superior para los botones */
-}
-
-/* Estilo para los botones de los formularios */
-#login-form button, #register-form button, #signup-button, #back-to-login-button {
-    margin-top: 10px; /* Añadido margen superior para los botones */
-    padding: 10px; /* Añadido padding */
-    background-color: var(--button-bg); /* Añadido color de fondo */
-    color: var(--text-color); /* Añadido color de texto */
-    border: none; /* Sin borde */
-    border-radius: 5px; /* Bordes redondeados */
-    cursor: pointer; /* Cursor de puntero */
-    transition: background-color 0.3s ease; /* Transición suave */
-}
-
-#signup-button:hover, #back-to-login-button:hover {
-    background-color: var(--hover-color); /* Color al pasar el mouse */
-}
-
-/* Corregir el ancho de los campos de texto */
-#login-form input, #register-form input {
-    width: calc(100% - 22px); /* Ajustar el ancho para que no exceda */
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-color);
-    font-size: 14px;
-}
-
-#login-form input::placeholder, #register-form input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* Estilo para el modal de registro */
-#register-modal {
-    display: none; /* Inicialmente oculto */
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    width: 300px; /* Ancho fijo para el modal */
-}
-
-/* Estilo para el botón de registro */
-#register-button {
-    position: absolute;
-    top: 10px;
-    right: 125px; /* Ajustar la posición */
-    padding: 10px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-/* Estilo para los botones de inicio de sesión y registro */
-#login-button, #register-button {
-    margin: 10px; /* Añadir margen para separar los botones */
-}
-
-/* Estilo para el enlace que abre en una nueva pestaña */
-.shader-card {
-    padding: 10px;
-    text-decoration: none; /* Sin subrayado */
-    color: inherit; /* Heredar el color del contenedor */
-}
-
-/* Contenedor para los botones */
-#button-container {
-    display: flex;
-    justify-content: flex-end; /* Alinear los botones a la derecha */
-    margin-bottom: 20px; /* Espacio entre los botones y la lista de shaders */
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1001;
 }
 
 /* Estilos para la página de usuario */
@@ -819,13 +891,6 @@ body {
     gap: 20px;
 }
 
-.shader-preview {
-    width: 75px;
-    height: 75px;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
 .shader-item {
     display: flex;
     align-items: center;
@@ -841,7 +906,7 @@ body {
 }
 
 .shader-title {
-    margin: 0 0 10px 0;
+    /* margin: 0 0 10px 0; */
     color: var(--primary-color);
 }
 
@@ -899,7 +964,7 @@ body {
     border: none; /* Sin borde */
     border-radius: 5px; /* Bordes redondeados */
     cursor: pointer; /* Cursor de puntero */
-    transition: background-color 0.3s ease; /* Transición suave */
+    transition: all 0.3s ease; /* Transición suave */
 }
 
 #profile-section button:hover {
@@ -955,4 +1020,187 @@ body {
 .action-button:active {
     transform: translateY(1px);
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+#user-container, #button-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--background-color);
+    padding: 8px 15px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+#username-display {
+    color: var(--primary-color);
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 105, 180, 0.5);
+}
+
+#logout-button {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#logout-button:hover {
+    background-color: var(--button-bg);
+    border-color: var(--primary-color);
+}
+
+#auth-buttons {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 4px;
+    border-radius: 4px;
+    gap: 4px;
+}
+
+#auth-buttons #user-info {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-color);
+    font-size: 11px;
+    padding: 2px 4px;
+}
+
+#auth-buttons #auth-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#auth-buttons button {
+    width: 90px;
+    height: 24px;
+    padding: 0;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#auth-buttons button:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Estilos para los modales */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal input {
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+}
+
+.modal button {
+    height: 32px;
+    padding: 0;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal button:hover {
+    background-color: var(--hover-color);
+}
+
+#overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1001;
+}
+
+#back-to-login-button {
+    margin-top: 10px;
+    background-color: transparent !important;
+    border: 1px solid var(--button-bg) !important;
+}
+
+#back-to-login-button:hover {
+    background-color: var(--button-bg) !important;
+}
+
+/* Asegurar que los modales estén por encima de todo */
+#login-modal, #register-modal {
+    z-index: 1002;
 }

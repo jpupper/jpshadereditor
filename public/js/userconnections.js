@@ -1,95 +1,163 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Script para manejar el inicio de sesión y registro
-    const loginButton = document.getElementById('login-button');
-    const registerButton = document.getElementById('register-button');
+document.addEventListener('DOMContentLoaded', () => {
+    // Elementos del DOM
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
     const overlay = document.getElementById('overlay');
+    const userInfo = document.querySelector('.user-info');
+    const authControls = document.querySelector('.auth-controls');
+    const usernameDisplay = document.querySelector('.username-display');
+    const loginButton = document.getElementById('login-button');
+    const signupButton = document.getElementById('signup-button');
+    const logoutButton = document.getElementById('logout-button');
+    const backToLoginButton = document.getElementById('back-to-login-button');
 
-    // Solo agregar event listeners si los elementos existen (estamos en index.html)
-    if (loginButton && registerButton && overlay) {
-        loginButton.addEventListener('click', function() {
+    // Determinar en qué página estamos
+    const isIndexPage = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/');
+    const isUserPage = window.location.pathname.includes('user.html');
+    const isShaderPage = window.location.pathname.includes('shader.html');
+
+    // Funciones de utilidad
+    function showLoginModal() {
+        if (loginModal && overlay) {
+            loginModal.style.display = 'block';
             overlay.style.display = 'block';
-            document.getElementById('login-modal').style.display = 'block';
-        });
+        }
+    }
 
-        registerButton.addEventListener('click', function() {
-            overlay.style.display = 'block';
-            document.getElementById('register-modal').style.display = 'block';
-        });
+    function closeLoginModal() {
+        if (loginModal && overlay) {
+            loginModal.style.display = 'none';
+            overlay.style.display = 'none';
+            if (registerModal) {
+                registerModal.style.display = 'none';
+            }
+        }
+    }
 
-        overlay.addEventListener('click', function() {
-            this.style.display = 'none';
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('register-modal').style.display = 'none';
-        });
+    function showRegisterModal() {
+        if (registerModal && loginModal) {
+            registerModal.style.display = 'block';
+            loginModal.style.display = 'none';
+        }
+    }
 
-        // Manejar el envío del formulario de inicio de sesión
-        document.getElementById('login-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = this[0].value;
-            const password = this[1].value;
+    // Función para verificar si hay un usuario logueado
+    function checkLoggedInUser() {
+        const username = localStorage.getItem('username');
+        
+        if (!userInfo || !authControls || !usernameDisplay) return;
 
-            fetch('/api/login', {
+        if (username) {
+            // Usuario logueado
+            userInfo.style.display = 'flex';
+            authControls.style.display = 'none';
+            usernameDisplay.textContent = username;
+            console.log('Usuario logueado:', username); // Debug
+        } else {
+            // Usuario no logueado
+            userInfo.style.display = 'none';
+            authControls.style.display = 'flex';
+            console.log('No hay usuario logueado'); // Debug
+        }
+    }
+
+    // Función para cerrar sesión
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        checkLoggedInUser();
+        if (!isIndexPage) {
+            window.location.href = 'index.html';
+        }
+    }
+
+    // Event Listeners
+    loginButton?.addEventListener('click', showLoginModal);
+    signupButton?.addEventListener('click', showRegisterModal);
+    logoutButton?.addEventListener('click', logout);
+    backToLoginButton?.addEventListener('click', () => {
+        if (registerModal) {
+            registerModal.style.display = 'none';
+        }
+        showLoginModal();
+    });
+    overlay?.addEventListener('click', closeLoginModal);
+
+    // Manejar el envío del formulario de inicio de sesión
+    const loginForm = document.getElementById('login-form');
+    loginForm?.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const username = this[0].value;
+        const password = this[1].value;
+
+        try {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ username, password })
-            })
-            .then(response => {
-                if (response.ok) {
-                    localStorage.setItem('username', username);
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('username', username);
+                closeLoginModal();
+                checkLoggedInUser(); // Actualizar UI inmediatamente
+                
+                // Redirigir a user.html solo si estamos en index.html
+                if (isIndexPage) {
                     window.location.href = 'user.html';
                 } else {
-                    return response.json().then(errorData => {
-                        alert(errorData.error);
-                    });
+                    checkLoggedInUser();
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al iniciar sesión. Inténtalo de nuevo.');
-            });
-        });
+            } else {
+                alert(data.message || 'Error en el inicio de sesión');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al iniciar sesión. Inténtalo de nuevo.');
+        }
+    });
 
-        document.getElementById('signup-button').addEventListener('click', function() {
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('register-modal').style.display = 'block';
-        });
+    // Manejar el envío del formulario de registro
+    const registerForm = document.getElementById('register-form');
+    registerForm?.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const username = this[0].value;
+        const email = this[1].value;
+        const password = this[2].value;
 
-        document.getElementById('register-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const username = this[0].value;
-            const email = this[1].value;
-            const password = this[2].value;
-
-            fetch('/api/register', {
+        try {
+            const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ username, email, password })
-            })
-            .then(response => {
-                if (response.ok) {
-                    localStorage.setItem('username', username);
-                    window.location.href = 'user.html';
-                } else {
-                    return response.json().then(errorData => {
-                        alert(errorData.error);
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al registrarse. Inténtalo de nuevo.');
             });
-        });
 
-        document.getElementById('back-to-login-button').addEventListener('click', function() {
-            document.getElementById('register-modal').style.display = 'none';
-            document.getElementById('login-modal').style.display = 'block';
-        });
-    }
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Registro exitoso. Por favor, inicia sesión.');
+                if (registerModal) {
+                    registerModal.style.display = 'none';
+                }
+                showLoginModal();
+            } else {
+                alert(data.message || 'Error en el registro');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al registrar. Inténtalo de nuevo.');
+        }
+    });
+
+    // Verificar estado de autenticación al cargar la página
+    checkLoggedInUser();
 
     // Verificar si estamos en la página de usuario
     if (window.location.pathname.includes('user.html')) {
@@ -187,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const shaderPreview = document.createElement('img');
                         shaderPreview.src = `img/previews/${shader.nombre}.png`;
                         shaderPreview.alt = `Preview de ${shader.nombre}`;
-                        shaderPreview.className = 'shader-preview';
+                        shaderPreview.className = 'user-shader-preview';
                         shaderPreview.onerror = () => {
                             shaderPreview.src = 'img/previews/placeholder.png';
                         };

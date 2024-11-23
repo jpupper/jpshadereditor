@@ -105,20 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('username', username);
                 closeLoginModal();
-                checkLoggedInUser(); // Actualizar UI inmediatamente
+                checkLoggedInUser();
                 
-                // Redirigir a user.html solo si estamos en index.html
                 if (isIndexPage) {
                     window.location.href = 'user.html';
                 } else {
                     checkLoggedInUser();
                 }
             } else {
-                alert(data.message || 'Error en el inicio de sesión');
+                console.error('Error de login:', data.message);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al iniciar sesión. Inténtalo de nuevo.');
         }
     });
 
@@ -142,17 +140,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                alert('Registro exitoso. Por favor, inicia sesión.');
                 if (registerModal) {
                     registerModal.style.display = 'none';
                 }
                 showLoginModal();
             } else {
-                alert(data.message || 'Error en el registro');
+                console.error('Error de registro:', data.message);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al registrar. Inténtalo de nuevo.');
         }
     });
 
@@ -201,21 +197,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Perfil actualizado correctamente');
+                        console.log('Perfil actualizado correctamente');
                     } else {
-                        alert('Error al actualizar el perfil');
+                        console.error('Error al actualizar el perfil:', response.statusText);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error al actualizar el perfil');
                 });
             });
         }
 
         // Lista de nombres para shaders
         const nombresVisuales = [
-            // ... (lista de nombres)
+            "supervisualx", "altoshadermagic", "sexyshaderblast", "atmosferaastralwave",
+            "espaciolocovibes", "visualdimension", "altoreality", "shadergalaxy",
+            "sexyuniverse", "astrallandscape", "espaciopixel", "supernovaeffect",
+            "altoluminance", "shaderdreams", "sexyvisualizer", "astraltravel",
+            "locovision", "visualshader", "astralpulse", "espaciocolor",
+            "highastral", "cosmicshader", "superastronauta", "locoshadervibes",
+            "sexyatmosfera", "altoespacio", "astralflow", "espaciocreativo",
+            "visualexplosion", "shadersynthwave", "astralglitch", "altodimensional",
+            "espaciolocoboom", "superdreamer", "shaderwild", "sexylaserwave",
+            "astralvortex", "visualspatial", "locoespacial", "altosurrealismo",
+            "shaderfusion", "espaciotranscend", "sexyhorizon", "astralvisualx",
+            "superespaciotime", "wildshader", "sexycosmos", "altodreamland",
+            "astralpixels", "shaderloops", "espaciolocomagic", "superlumine",
+            "shadercosmic", "sexydimension", "atmosferalight", "altocosmos",
+            "locoinfinite", "astralflowing", "visualcascade", "espaciolocoloop",
+            "shaderzone", "altotemporal", "sexyatmosphere", "astraldynamics",
+            "espaciotrippy", "locoshadereffect", "cosmicvortex", "sexyflamewave",
+            "altouniverso", "astralbliss", "shaderfields", "visualdelirio",
+            "espaciolocorift", "sexyreality", "shaderpulsewave", "astraldreamscape",
+            "altorealm", "superlocovision", "visualclimax", "espaciovirtualx",
+            "sexyshadertrip", "altoparallax", "shaderastronaut", "wilddimensional",
+            "locovisualdream", "astraltrails", "espaciouniverso", "sexyexplorer",
+            "altoglitcheffect", "superdimensivo", "atmosferatrip", "locoshadervortex",
+            "espacioparallax", "sexyglitchx", "shaderrealidad", "superluminosity",
+            "altotranscend", "sexyplanetarium", "astralrender", "locouniversovibes",
+            "altocosmicflow", "supernebula", "visualintensity", "espaciowave",
+            "shaderlightbeam", "sexygalactic", "astralexplorer", "wildvisualdreams",
+            "espaciolightpulse", "cosmicatmosphere", "locolasertrip", "supervisualhorizon",
+            "altorealities", "shaderdimensions", "sexyshadergalaxy", "astralsoundwave",
+            "visualwavescape", "espaciovortex", "highshadervibes", "superdynamicshader",
+            "locoluminance", "atmosferainfinita", "sexyvisualtrip", "shaderatmospherix",
+            "superdimensionalvibes", "espaciolocoinfinity", "astrallumina", "cosmicpulse",
+            "sexydreamland", "altorealidades", "visualmystic", "locoparallaxtrip",
+            "espaciomotion", "shaderuniverse", "sexyhorizonscape", "altosoundscapes",
+            "superrealityvision", "astralglow", "shadervibrations", "sexygalaxypulse",
+            "espaciobeyond", "visualinfinity", "locodimension", "superastralflow",
+            "shaderdreamtrails", "sexydreamvortex", "altocosmicwave", "cosmicdimensions",
+            "visualshaderrift", "sexyastralflow", "locovortexwave", "superplanetwave",
+            "altomotionfx", "visualsupernova", "espaciolocoflow", "shaderlightstorm",
+            "superwildpulse", "sexyvisualspace", "cosmicsymphony", "espaciotemporal",
+            "visualdelirium", "locoshaderexplore", "supernovaexplorer", "altovirtualwave",
+            "shaderinfinite", "sexygalacticdream", "astraltextures", "espaciolightfield",
+            "superplanettrip", "shadermyst", "sexyluminosity", "lococosmictrails",
+            "visualspectrum", "atmosferadream", "sexyflowtrails", "shaderwildblast",
+            "visualgalaxytrip", "locouniversex", "cosmicvisualwave", "superastrallight",
+            "sexyparallaxtrip", "shadermotionpulse", "altospacescape", "locorealities",
+            "superflowvisual", "astralwavescape", "visualshockwave", "locosynthwave",
+            "sexyinfiniteloop", "shadertrailscape", "superhorizontrip", "espaciolocoexplore",
+            "cosmicsounds", "altoshaderblast", "visualdreamfx", "locodreampulse",
+            "espaciolumina", "atmosferaexplorer", "superhighvisual", "sexyshadervibes",
+            "altodreamvision", "superinfiniteflow", "shadermagicfield", "astralpulselight",
+            "visualbeamwave", "cosmicparallax", "locoinfinitespace", "espaciovisualmagic",
+            "supertripdimension", "sexyvisualfield", "altocosmicmotion", "shaderlightdream",
+            "visualinfinitex", "wildspacedream", "sexyastralvision", "altolightfield",
+            "cosmicdreamwave", "supercosmicstorm", "visualspacedrift", "locogalaxyvibes"
         ];
 
         // Manejar la creación de nuevo shader

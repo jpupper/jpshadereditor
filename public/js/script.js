@@ -26,7 +26,7 @@ function init() {
     });
     
     if (!gl) {
-        alert("WebGL no está soportado, pero se mostrará el código.");
+        console.error("WebGL no está soportado, pero se mostrará el código.");
         return;
     }
 
@@ -531,7 +531,7 @@ async function saveShader() {
     const shaderContent = editor.getValue();
 
     if (!shaderName || !userName || !shaderContent) {
-        alert('Por favor completa todos los campos');
+        console.error('Campos incompletos');
         return;
     }
 
@@ -552,7 +552,7 @@ async function saveShader() {
         const result = await response.json();
         
         if (!response.ok) {
-            alert(result.error || 'Error al guardar el shader');
+            console.error('Error al guardar el shader:', result.error);
             return;
         }
 
@@ -561,36 +561,38 @@ async function saveShader() {
             document.getElementById('glsl-canvas-fullscreen') : 
             document.getElementById('glsl-canvas');
             
-        const dataURL = currentCanvas.toDataURL('image/png'); // Convierte el canvas a una URL de datos
+        // Asegurarnos de que el canvas esté renderizado antes de capturar la imagen
+        requestAnimationFrame(async () => {
+            const dataURL = currentCanvas.toDataURL('image/png');
 
-        try {
-            const response = await fetch('/api/save-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ image: dataURL }),
-            });
+            try {
+                const response = await fetch('/api/save-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        image: dataURL,
+                        name: shaderName
+                    }),
+                });
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                alert(data.message); // Mensaje de éxito
-            } else {
-                alert(data.message); // Mensaje de error
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    console.error('Error al guardar la imagen:', data.message);
+                }
+            } catch (error) {
+                console.error('Error al guardar la imagen:', error);
             }
-        } catch (error) {
-            console.error('Error al guardar la imagen:', error);
-            alert('Error al guardar la imagen');
-        }
 
-        // Actualizar la URL para quitar el parámetro newShader
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('newShader');
-        window.history.replaceState({}, '', newUrl);
+            // Actualizar la URL para quitar el parámetro newShader
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('newShader');
+            window.history.replaceState({}, '', newUrl);
+        });
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al guardar el shader');
     }
 }
 

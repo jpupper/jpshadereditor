@@ -940,7 +940,8 @@ body {
 #profile-section textarea,
 #profile-section input[type="file"] {
     width: 100%; /* Ancho completo */
-    padding: 10px; /* Espaciado interno */
+    padding: 0.5vh 0vw 0.5vh 0vw;
+    /* padding: 10px; */ /* Espaciado interno */
     margin-bottom: 15px; /* Espacio debajo de los campos */
     border: 1px solid var(--border-color); /* Borde */
     border-radius: 5px; /* Bordes redondeados */

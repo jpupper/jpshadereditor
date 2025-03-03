@@ -1,0 +1,122 @@
+/* Mobile-specific styles for shader editor */
+@media screen and (max-width: 768px) {
+    /* Main container adjustments */
+    #main-container {
+        flex-direction: column;
+        height: auto;
+        width: 100%;
+        overflow: auto;
+    }
+    
+    /* Editor section */
+    #editor-section {
+        width: 100%;
+        height: auto;
+        min-height: 40vh;
+        display: block !important; /* Forzar visualización */
+    }
+    
+    /* Canvas container */
+    #canvas-container {
+        width: 100%;
+        height: 40vh;
+    }
+    
+    /* View toggle buttons - Ajustar tamaño y visibilidad */
+    .view-toggle {
+        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 2500; /* Aumentar z-index para que esté por encima de todo */
+        width: 100%;
+        background-color: rgba(30, 30, 30, 0.9);
+        height: 35px;
+    }
+    
+    .view-btn {
+        flex: 1;
+        padding: 5px;
+        font-size: 12px;
+        border: none;
+        color: white;
+        max-width: 80px;
+        margin: 2px;
+    }
+    
+    /* Shader selection interface - Mejorar organización */
+    #shader-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(30, 30, 30, 0.95);
+        padding: 5px;
+        z-index: 2400;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    #shader-dropdown, 
+    #shader-dropdown-fullscreen {
+        width: 100%;
+        height: 30px;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    /* Mobile toggle editor buttons - Asegurar visibilidad */
+    #mobile-toggle-editor {
+        position: fixed;
+        bottom: 70px; /* Ajustar posición para que no se tape */
+        right: 10px;
+        z-index: 2500;
+        padding: 8px;
+        font-size: 12px;
+        background-color: #ff3366;
+        display: block !important;
+    }
+    
+    /* Login/Register buttons - Ajustar tamaño */
+    .auth-button {
+        font-size: 12px !important;
+        padding: 5px 10px !important;
+        height: auto !important;
+        min-width: 80px !important;
+    }
+    
+    /* Ajustar contenedor de autenticación */
+    #auth-container {
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 5px;
+        z-index: 2600; /* Mayor que todos los demás elementos */
+    }
+    
+    /* Ajustar inputs y controles del shader */
+    .shader-input {
+        height: 30px;
+        font-size: 12px;
+        padding: 5px;
+    }
+    
+    .shader-button {
+        height: 30px;
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+    
+    /* Asegurar que el editor esté visible y bien posicionado */
+    #editor-container {
+        margin-top: 40px;
+        padding-bottom: 60px; /* Espacio para los controles inferiores */
+    }
+    
+    /* Ajustar CodeMirror para móvil */
+    .CodeMirror {
+        font-size: 12px !important;
+        height: calc(40vh - 40px) !important;
+    }
+}

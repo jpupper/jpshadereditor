@@ -1,0 +1,28 @@
+Estamos haciendo un megasistema para programar shaders. 
+
+Es como un editor a lo shadertoy pero con la diferencia de que los shaders se actualizan por websockets por distintas sesiones
+también los usuarios pueden crear shaders y se almacenan en la base de datos con mongodb.
+
+Caracteristicas principales :
+- Los shaders se programan con glsl
+- Se actualizan por websockets si tengo abierto el mismo shader en 2 lugares
+- Los shaders se almacenan en la base de datos con mongodb.
+- Los usuarios pueden crear shaders y se almacenan en la base de datos.
+
+Diferentes vistas : 
+
+-index.html : 
+Aca se cargan y levantan todos los shaders de la base de datos de todos los usuarios. Ademas se puede loguear
+-user.html : 
+El perfil de usuario de cada creador, de acá se pueden crear nuevos shaders, y cambiar las distintas cosas de la base de datos. 
+-admin.html : Esta es una pagina especial que nos tiene que permitir ver todas las conexiones activas de usuarios a los distintos shaders y como estan interactuando. 
+-shader.html : Esta es la mas importante, tiene el editor del codigo del shader, el render del shader, genera sliders por los distintos uniforms y tiene un modo fullscreen y un modo comun. También permite guardar y cargar los shaders solo si el shader fue creado por el usuario logueado, caso contrario no podra guardarlo en la base de datos. 
+
+REGLAS QUE HAY QUE SEGUIR ESTRICTAMENTE : 
+-En todas las implementaciones tenes que asegurarte de hacer SOLO lo que el usuario te pide, no tenes derecho a modificar funcionalidades de las cuales no estuvieron en la orden del prompt. 
+-Tampoco tenes derecho a "optimizar o simplificar" el codigo para que funcione, todo el codigo escrito esta ahí por una razón , si lo borras vas a romper el programa y vamos a tener que volver a una versión anterior , esto es lo peor que podes hacer. 
+-Tenes que enfocarte en resolver ESPECIFICAMENTE lo que te piden. 
+
+
+
+TO DO LIST : 

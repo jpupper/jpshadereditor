@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = this[1].value;
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('https://vps-4455523-x.dattaweb.com/shader/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = this[2].value;
 
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch('https://vps-4455523-x.dattaweb.com/shader/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Cargar descripción del usuario
-        fetch('/api/user-profile?username=' + username)
+        fetch(`https://vps-4455523-x.dattaweb.com/shader/api/user-profile?username=${username}`)
             .then(response => response.json())
             .then(data => {
                 if (data.description) {
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveProfileButton.addEventListener('click', function() {
                 const description = document.getElementById('description').value;
                 
-                fetch('/api/update-profile', {
+                fetch('https://vps-4455523-x.dattaweb.com/shader/api/update-profile', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!username) return;
 
             try {
-                const response = await fetch(`/api/user-shaders/${username}`);
+                const response = await fetch(`https://vps-4455523-x.dattaweb.com/shader/api/user-shaders/${username}`);
                 if (response.ok) {
                     const shaders = await response.json();
                     const shadersList = document.getElementById('my-shaders-list');
@@ -302,12 +302,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // Crear y configurar la imagen de preview
                         const shaderPreview = document.createElement('img');
-                        shaderPreview.src = `img/previews/${shader.nombre}.png`;
+                        shaderPreview.src = `https://vps-4455523-x.dattaweb.com/shader/img/previews/${shader.nombre}.png`;
                         shaderPreview.alt = `Preview de ${shader.nombre}`;
                         shaderPreview.className = 'user-shader-preview';
-                        shaderPreview.onerror = () => {
+                        /*shaderPreview.onerror = () => {
                             shaderPreview.src = 'img/previews/placeholder.png';
-                        };
+                        };*/
                         
                         // Crear el título
                         const shaderTitle = document.createElement('h3');

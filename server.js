@@ -1,55 +1,103 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+	path: '/shader/socket.io',  // Configura el path correcto para socket.io
+    cors: {
+        origin: "*", // Asegúrate de configurar correctamente los CORS según tus necesidades
+        methods: ["GET", "POST"]
+    }
+});
+
 const uploadShaders = require('./uploadshaders');
 const cors = require('cors');
 const { connectToDatabase, closeConnection } = require('./db');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+// const multer = require('multer'); // Quitar multer
 
-const isRunningLocal = false;
+const isRunningLocal = true;
 const PORT = process.env.PORT || 3250;
 let db = null;
 // Agregar el Map para las conexiones activas
 const activeConnections = new Map();
+// Map para mantener registro de shaders activos: shaderName -> {socketId, lastUpdate}
+const activeShaders = new Map();
 
 // Función para conectar a la base de datos
 async function connectToDatabaseWrapper() {
     if (db) return db;
 
     try {
+        console.log('Intentando conectar a MongoDB...');
+        console.log('Modo:', isRunningLocal ? 'local' : 'Atlas');
         db = await connectToDatabase(isRunningLocal);
+        console.log('Conexión exitosa a MongoDB');
         return db;
     } catch (error) {
-        console.error('Error al conectar a MongoDB:', error);
+        console.error('Error detallado al conectar a MongoDB:', error);
+        console.error('Stack trace:', error.stack);
         throw error;
     }
 }
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
+
 app.use(express.json({ limit: '50mb' })); // Límite para shaders grandes
 
+// Logging middleware para ver las rutas solicitadas
+app.use((req, res, next) => {
+    console.log('Requested URL:', req.url);
+    console.log('Full path:', path.join(__dirname, 'public', req.url));
+    next();
+});
+
+// Servir archivos estáticos
+app.use('/shader', express.static(path.join(__dirname, 'public')));
+
+// Ruta específica para las imágenes de preview
+app.use('/shader/img/previews', express.static(path.join(__dirname, 'public', 'img', 'previews')));
+
+// Ruta principal para /shader
+app.get('/shader', (req, res) => {
+    res.send('Servidor de Shaders activo');
+});
+// Ruta principal para /shader
+app.get('/pruebaloca', (req, res) => {
+    res.send('Prueba de mensaje loco');
+});
+// Ruta raíz para respuesta de texto plano
+app.get('/', (req, res) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end('Carga app shaders');
+});
+
 // Rutas API
-app.get('/api/shaders', async (req, res) => {
+app.get('/shader/api/shaders', async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
         const shaders = await shadersCollection.find({}).toArray();
 
-        console.log('Endpoint /api/shaders llamado');
+        console.log('Endpoint /shader/api/shaders llamado');
         console.log('Shaders encontrados:', shaders.length);
 
         res.json(shaders);
     } catch (error) {
-        console.error('Error en /api/shaders:', error);
+        console.error('Error en /shader/api/shaders:', error);
         res.status(500).json({ error: 'Error al obtener shaders' });
     }
 });
 
-app.get('/api/shaders/:nombre', async (req, res) => {
+app.get('/shader/api/shaders/:nombre', async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
@@ -65,7 +113,7 @@ app.get('/api/shaders/:nombre', async (req, res) => {
     }
 });
 
-app.get('/api/shader-exists/:nombre', async (req, res) => {
+app.get('/shader/api/shader-exists/:nombre', async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
@@ -77,7 +125,7 @@ app.get('/api/shader-exists/:nombre', async (req, res) => {
     }
 });
 
-app.post('/api/shaders', async (req, res) => {
+app.post('/shader/api/shaders', async (req, res) => {
     try {
         const { nombre, autor, contenido } = req.body;
 
@@ -88,7 +136,6 @@ app.post('/api/shaders', async (req, res) => {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
 
-        // Actualizar si existe, insertar si no existe (upsert)
         const result = await shadersCollection.updateOne(
             { nombre: nombre },
             { $set: { nombre, autor, contenido } },
@@ -102,40 +149,56 @@ app.post('/api/shaders', async (req, res) => {
     }
 });
 
-// Ruta para guardar la imagen
-app.post('/api/save-image', async (req, res) => {
+app.post('/shader/api/save-image', async (req, res) => {
     const { image, name } = req.body;
 
-    // Verificar que se haya proporcionado un nombre
     if (!name) {
         return res.status(400).json({ error: 'Falta el nombre del shader' });
     }
 
-    // Eliminar el prefijo de la imagen base64
+    if (!image || !image.startsWith('data:image/png;base64,')) {
+        return res.status(400).json({ error: 'Formato de imagen inválido' });
+    }
+
     const base64Data = image.replace(/^data:image\/png;base64,/, '');
-    const filePath = path.join(__dirname, 'public', 'img', 'previews', `${name}.png`); // Guardar en img/previews
+    const filePath = path.join(__dirname, 'public', 'img', 'previews', `${name}.png`);
 
     try {
-        // Guardar la imagen en el sistema de archivos
+        // Verificar que el shader existe en la base de datos
+        const db = await connectToDatabaseWrapper();
+        const shadersCollection = db.collection('shaders');
+        const shader = await shadersCollection.findOne({ nombre: name });
+
+        if (!shader) {
+            return res.status(404).json({ error: 'Shader no encontrado' });
+        }
+
+        // Asegurar que el directorio existe
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Guardar la imagen
         fs.writeFileSync(filePath, base64Data, { encoding: 'base64' });
-        res.status(200).json({ message: 'Imagen guardada exitosamente' });
+
+        // Actualizar la referencia en la base de datos
+        await shadersCollection.updateOne(
+            { nombre: name },
+            { $set: { imagePath: `/img/previews/${name}.png` } }
+        );
+
+        res.status(200).json({ 
+            message: 'Imagen guardada exitosamente',
+            path: `/img/previews/${name}.png`
+        });
     } catch (error) {
         console.error('Error al guardar la imagen:', error);
         res.status(500).json({ error: 'Error al guardar la imagen' });
     }
 });
 
-// Archivos estáticos
-app.use(express.static('public'));
-
-// Crear la carpeta de previews si no existe
-const previewsDir = path.join(__dirname, 'public', 'img', 'previews');
-if (!fs.existsSync(previewsDir)) {
-    fs.mkdirSync(previewsDir, { recursive: true });
-}
-
-// Ruta para registrar un nuevo usuario
-app.post('/api/register', async (req, res) => {
+app.post('/shader/api/register', async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
@@ -146,24 +209,18 @@ app.post('/api/register', async (req, res) => {
         const db = await connectToDatabaseWrapper();
         const usersCollection = db.collection('users');
 
-        // Verificar si el usuario ya existe
         const existingUser = await usersCollection.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ error: 'El usuario ya existe' });
         }
 
-        // Hash de la contraseña
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Guardar el nuevo usuario
         await usersCollection.insertOne({
             username,
             email,
             password: hashedPassword,
         });
-
-        // Aquí puedes establecer la sesión del usuario si estás usando sesiones
-        // req.session.userId = newUser._id; // Ejemplo de cómo establecer la sesión
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
     } catch (error) {
@@ -172,9 +229,8 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// Ruta para obtener el usuario actual
-app.get('/api/user', async (req, res) => {
-    const userId = req.session.userId; // Ejemplo usando sesiones
+app.get('/shader/api/user', async (req, res) => {
+    const userId = req.session.userId;
 
     if (!userId) {
         return res.status(401).json({ error: 'No autenticado' });
@@ -183,7 +239,7 @@ app.get('/api/user', async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const usersCollection = db.collection('users');
-        const user = await usersCollection.findOne({ _id: userId }, { projection: { password: 0 } }); // No devolver la contraseña
+        const user = await usersCollection.findOne({ _id: userId }, { projection: { password: 0 } });
 
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -196,8 +252,7 @@ app.get('/api/user', async (req, res) => {
     }
 });
 
-// Ruta para iniciar sesión
-app.post('/api/login', async (req, res) => {
+app.post('/shader/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -208,20 +263,15 @@ app.post('/api/login', async (req, res) => {
         const db = await connectToDatabaseWrapper();
         const usersCollection = db.collection('users');
 
-        // Buscar el usuario por nombre de usuario
         const user = await usersCollection.findOne({ username });
         if (!user) {
             return res.status(400).json({ error: 'Usuario no encontrado' });
         }
 
-        // Verificar la contraseña
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(400).json({ error: 'Contraseña incorrecta' });
         }
-
-        // Aquí puedes establecer la sesión del usuario si estás usando sesiones
-        // req.session.userId = user._id; // Ejemplo de cómo establecer la sesión
 
         res.status(200).json({ message: 'Inicio de sesión exitoso' });
     } catch (error) {
@@ -230,8 +280,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Rutas para el perfil de usuario
-app.get('/api/user-profile', async (req, res) => {
+app.get('/shader/api/user-profile', async (req, res) => {
     try {
         const { username } = req.query;
         if (!username) {
@@ -256,7 +305,7 @@ app.get('/api/user-profile', async (req, res) => {
     }
 });
 
-app.post('/api/update-profile', async (req, res) => {
+app.post('/shader/api/update-profile', async (req, res) => {
     try {
         const { username, description } = req.body;
         if (!username) {
@@ -279,7 +328,7 @@ app.post('/api/update-profile', async (req, res) => {
     }
 });
 
-app.post('/api/create-shader', async (req, res) => {
+app.post('/shader/api/create-shader', async (req, res) => {
     try {
         const { name, author, code } = req.body;
         if (!name || !author || !code) {
@@ -307,8 +356,7 @@ app.post('/api/create-shader', async (req, res) => {
     }
 });
 
-// Endpoint para obtener los shaders de un usuario específico
-app.get('/api/user-shaders/:username', async (req, res) => {
+app.get('/shader/api/user-shaders/:username', async (req, res) => {
     try {
         const db = await connectToDatabaseWrapper();
         const shadersCollection = db.collection('shaders');
@@ -324,99 +372,97 @@ app.get('/api/user-shaders/:username', async (req, res) => {
     }
 });
 
-// Iniciar el servidor
+app.get('/shader/api/connections', (req, res) => {
+    // Convertir el Map a un array de objetos con solo la información necesaria
+    const connections = Array.from(activeConnections.values()).map(connection => ({
+        id: connection.id,
+        connectTime: connection.connectTime,
+        lastActivity: connection.lastActivity,
+        currentShader: connection.currentShader
+    }));
+    res.json(connections);
+});
+
+// Configuración de Socket.IO
+io.on('connection', (socket) => {
+    console.log('Cliente conectado:', socket.id);
+    
+    // Registrar nueva conexión
+    activeConnections.set(socket.id, {
+        id: socket.id,
+        connectTime: new Date()
+    });
+
+    // Cuando un cliente pide un shader
+    socket.on('pedirShader', () => {
+        const shaderName = socket.handshake.query.shader || 'default';
+        
+        // Verificar si hay una sesión activa para este shader
+        const activeSession = activeShaders.get(shaderName);
+        
+        if (activeSession && activeSession.socketId !== socket.id) {
+            // Hay una sesión activa, pedirle que envíe su versión
+            console.log(`Solicitando shader ${shaderName} al cliente ${activeSession.socketId}`);
+            io.to(activeSession.socketId).emit('enviarShaderActual', {
+                requestingClient: socket.id
+            });
+        } else {
+            // No hay sesión activa o es el mismo cliente
+            activeShaders.set(shaderName, {
+                socketId: socket.id,
+                lastUpdate: new Date()
+            });
+        }
+        
+    });
+
+    // Cuando un cliente envía una actualización
+    socket.on('shaderUpdate', (data) => {
+        const { nombre, autor, contenido, cursorPos } = data;
+        
+        // Actualizar registro de shader activo
+        activeShaders.set(nombre, {
+            socketId: socket.id,
+            lastUpdate: new Date()
+        });
+
+        // Broadcast a todos menos al emisor
+        socket.broadcast.emit('shaderUpdate', data);
+    });
+
+    // Cuando un cliente envía una actualización de uniformes
+    socket.on('uniformsUpdate', (data) => {
+        console.log('Uniform update received:', data);
+        // Broadcast to all other clients
+        socket.broadcast.emit('uniformsUpdate', data);
+    });
+
+    // Cuando un cliente se desconecta
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado:', socket.id);
+        activeConnections.delete(socket.id);
+        
+        // Limpiar shaders activos de este cliente
+        for (const [shaderName, session] of activeShaders.entries()) {
+            if (session.socketId === socket.id) {
+                activeShaders.delete(shaderName);
+            }
+        }
+    });
+});
+
+// Función para iniciar el servidor
 async function startServer() {
     try {
         await connectToDatabaseWrapper();
-
-        const server = http.listen(PORT, async () => {
-            console.log(`Servidor corriendo en http://localhost:${PORT}`);
-            try {
-                await uploadShaders.checkAndLoadShaders();
-            } catch (error) {
-                console.error('Error al inicializar shaders:', error);
-            }
-        });
-
-        // Configuración de Socket.IO
-        io.on('connection', (socket) => {
-            console.log('Nueva conexión:', socket.id);
-            socket.broadcast.emit("pedirShader","holaman"); //Esto es para que ucando un nuevo cliente entra se acutaliza con el shader con el que se esta trabajando que es como la ultima sesion. 
-            const origin = socket.handshake.headers.origin || 'Origen desconocido';
-            const isAdmin = socket.handshake.headers.referer?.includes('admin.html');
-
-            // Variable para determinar si es una nueva conexión
-            let isNewConnection = true;
-
-            if (!isAdmin) {
-                const urlParams = new URLSearchParams(socket.handshake.headers.referer.split('?')[1]);
-                const shaderName = urlParams.get('shader');
-
-                activeConnections.set(socket.id, {
-                    id: socket.id,
-                    origin: origin,
-                    connectTime: new Date(),
-                    lastActivity: new Date(),
-                    isEditing: false,
-                    currentShader: shaderName,
-                    shaderInfo: {
-                        nombre: shaderName,
-                        autor: '',
-                        contenido: '',
-                    },
-                });
-
-                // Emitir la lista actualizada a todos los clientes
-                io.emit('connectionsUpdate', Array.from(activeConnections.values()));
-            }
-
-            socket.on('shaderUpdate', (data) => {
-                console.log('Datos recibidos en shaderUpdate:', data);
-                if (activeConnections.has(socket.id)) {
-                    const connection = activeConnections.get(socket.id);
-                    connection.lastActivity = new Date();
-                    connection.isEditing = true;
-                    connection.currentShader = data.nombre;
-
-                    // Actualizar la información del shader en activeConnections
-                    connection.shaderInfo = {
-                        nombre: data.nombre,
-                        autor: data.autor,
-                        contenido: data.contenido,
-                    };
-
-                    // Emitir a todos los clientes conectados al mismo shader, excepto al que lo originó
-                    if (!isNewConnection) { // Solo emitir si no es una nueva conexión
-                        socket.broadcast.emit('shaderUpdate', {
-                            id: socket.id,
-                            nombre: data.nombre,
-                            autor: data.autor,
-                            contenido: data.contenido,
-                        });
-                    }
-                }
-            });
-
-            socket.on('disconnect', () => {
-                console.log('Desconexión:', socket.id);
-                activeConnections.delete(socket.id);
-                io.emit('connectionsUpdate', Array.from(activeConnections.values()));
-            });
-
-            // Restablecer el estado de nueva conexión después de un breve retraso
-            setTimeout(() => {
-                isNewConnection = false; // Restablecer el estado después de un tiempo
-            }, 500); // Ajusta el tiempo según sea necesario
+        
+        http.listen(PORT, () => {
+            console.log(`Servidor escuchando en puerto ${PORT}`);
         });
     } catch (error) {
         console.error('Error al iniciar el servidor:', error);
         process.exit(1);
     }
 }
-
-// Ruta para conexiones activas
-app.get('/api/connections', (req, res) => {
-    res.json(Array.from(activeConnections.values()));
-});
 
 startServer();

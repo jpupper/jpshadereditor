@@ -1,6 +1,20 @@
-const socket = io();
+// Esperar a que se inicialice la instancia global de socket
+let socket;
+document.addEventListener('DOMContentLoaded', () => {
+    socket = window.socketInstance;
+    if (!socket) {
+        console.error('No se encontró la instancia global de socket');
+        return;
+    }
+    initializeAdmin();
+});
+
 const connectionsList = document.getElementById('connections-list');
 const totalConnections = document.getElementById('total-connections');
+
+// Variable para almacenar las conexiones activas y sus shaders
+let activeConnections = [];
+let activeShaders = new Map(); // Mapa para mantener el estado de los shaders
 
 function formatDate(date) {
     return new Date(date).toLocaleString('es-ES', {
@@ -14,36 +28,53 @@ function formatDate(date) {
 }
 
 function updateConnectionsList(connections) {
+    if (!connectionsList || !connections) return;
+    
+    console.log('Actualizando lista de conexiones:', connections);
+    
     connectionsList.innerHTML = '';
     totalConnections.textContent = `Conexiones activas: ${connections.length}`;
     
     connections.forEach(conn => {
+        if (!conn) return;
+        
         const connectionCard = document.createElement('div');
         connectionCard.className = 'connection-card';
         
         // Calcular tiempo de conexión
-        const connectedTime = Math.floor((new Date() - new Date(conn.connectTime)) / 1000);
+        const connectedTime = Math.floor((new Date() - new Date(conn.connectTime || Date.now())) / 1000);
         const minutes = Math.floor(connectedTime / 60);
         const seconds = connectedTime % 60;
         
+        // Obtener información del shader activo para esta conexión
+        const activeShader = activeShaders.get(conn.id);
+        const shaderInfo = activeShader || {};
+        
         // Crear el hipervínculo para el shader
-        const shaderLink = `<a href="/?shader=${encodeURIComponent(conn.shaderInfo.nombre)}" target="_blank">${conn.shaderInfo.nombre}</a>`;
+        const shaderLink = shaderInfo.nombre 
+            ? `<a href="shader.html?shader=${encodeURIComponent(shaderInfo.nombre)}" target="_blank">${shaderInfo.nombre}</a>` 
+            : 'Sin shader activo';
+        
+        // Truncar el contenido si es muy largo
+        const contentPreview = shaderInfo.contenido 
+            ? shaderInfo.contenido.substring(0, 50) + (shaderInfo.contenido.length > 50 ? '...' : '')
+            : 'N/A';
         
         connectionCard.innerHTML = `
             <div class="connection-info">
                 <div class="connection-details">
-                    <div class="connection-id">ID: ${conn.id}</div>
-                    <div class="connection-origin">Origen: ${conn.origin}</div>
+                    <div class="connection-id">ID: ${conn.id || 'N/A'}</div>
+                    <div class="connection-origin">Origen: ${conn.origin || 'Desconocido'}</div>
                     <div class="connection-status ${conn.isEditing ? 'editing' : ''}">
                         ${conn.isEditing ? '🖊️ Editando' : '👀 Observando'}
                     </div>
                     <div class="connection-shader"><strong>Shader:</strong> ${shaderLink}</div>
-                    <div class="connection-author"><strong>Autor:</strong> ${conn.shaderInfo ? conn.shaderInfo.autor : 'N/A'}</div>
-                    <div class="connection-content"><strong>Contenido:</strong> ${conn.shaderInfo ? conn.shaderInfo.contenido : 'N/A'}</div>
+                    <div class="connection-author"><strong>Autor:</strong> ${shaderInfo.autor || 'N/A'}</div>
+                    <div class="connection-content"><strong>Contenido:</strong> ${contentPreview}</div>
                 </div>
                 <div class="connection-time">
                     <div>Conectado hace: ${minutes}m ${seconds}s</div>
-                    <div>Última actividad: ${formatDate(conn.lastActivity)}</div>
+                    <div>Última actividad: ${formatDate(conn.lastActivity || Date.now())}</div>
                 </div>
             </div>
         `;
@@ -51,48 +82,43 @@ function updateConnectionsList(connections) {
     });
 }
 
-// Actualizar la lista cada segundo para mantener el tiempo actualizado
-setInterval(() => {
-    fetch('/api/connections')
-        .then(response => response.json())
-        .then(updateConnectionsList)
-        .catch(console.error);
-}, 1000);
+function initializeAdmin() {
+    // Actualizar la lista cada segundo para mantener el tiempo actualizado
+    setInterval(() => {
+        fetch(CONFIG.API_URL + '/api/connections')
+            .then(response => response.json())
+            .then(connections => {
+                activeConnections = connections;
+                updateConnectionsList(connections);
+            })
+            .catch(console.error);
+    }, 1000);
 
-// Escuchar eventos de conexión
-socket.on('connect', () => {
-    console.log('Panel de administración conectado');
-});
+    // Escuchar eventos de conexión
+    socket.on('connect', () => {
+        console.log('Panel de administración conectado');
+        socket.emit("pedirShader");
+    });
 
-socket.on('disconnect', () => {
-    console.log('Panel de administración desconectado');
-    totalConnections.textContent = 'Desconectado del servidor...';
-});
+    socket.on('disconnect', () => {
+        console.log('Panel de administración desconectado');
+        totalConnections.textContent = 'Desconectado del servidor...';
+    });
 
-// Escuchar actualizaciones de conexiones
-socket.on('connectionsUpdate', (connections) => {
-    updateConnectionsList(connections);
-});
-
-// Escuchar actualizaciones de shader
-socket.on('shaderUpdate', (data) => {
-    console.log('Shader actualizado recibido en el panel de administración:', data);
-    
-    // Actualizar la información de la conexión correspondiente
-    const connection = Array.from(activeConnections.values()).find(conn => conn.id === data.id);
-    if (connection) {
-        connection.shaderInfo = {
+    // Escuchar actualizaciones de shader
+    socket.on('shaderUpdate', (data) => {
+        console.log('==================== SHADER UPDATE RECIBIDO ====================');
+        console.log('Data completa recibida:', data);
+        
+        // Actualizar el mapa de shaders activos
+        activeShaders.set(data.id, {
             nombre: data.nombre,
             autor: data.autor,
-            contenido: data.contenido
-        };
-        // Llamar a updateConnectionsList para reflejar los cambios
-        updateConnectionsList(Array.from(activeConnections.values()));
-    }
-});
-
-socket.on('connection', (socket) => {
-    const origin = socket.handshake.headers.origin || 'Origen desconocido';
-    console.log('Nueva conexión desde:', origin);
-    // ... resto del código ...
-});
+            contenido: data.contenido,
+            lastUpdate: new Date()
+        });
+        
+        // Forzar actualización inmediata de la UI
+        updateConnectionsList(activeConnections);
+    });
+}

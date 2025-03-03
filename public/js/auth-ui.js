@@ -14,6 +14,7 @@ function initializeAuthUI() {
             
             <div class="user-info" style="display: none;">
                 <span class="username-display"></span>
+                <button type="button" class="auth-button" id="profile-button">Mi Perfil</button>
                 <button type="button" class="auth-button" id="logout-button">Cerrar Sesión</button>
             </div>
         </div>
@@ -54,4 +55,32 @@ function initializeAuthUI() {
 }
 
 // Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', initializeAuthUI);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeAuthUI();
+    
+    // Add profile button event listener
+    document.getElementById('profile-button')?.addEventListener('click', () => {
+        window.location.href = 'user.html';
+    });
+
+    // Add login/logout handlers
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // ... existing login logic ...
+        
+        // After successful login, update save button visibility
+        const shaderAuthor = document.getElementById('shader-author')?.value;
+        if (typeof window.actualizarVisibilidadBotonGuardar === 'function') {
+            window.actualizarVisibilidadBotonGuardar(shaderAuthor);
+        }
+    });
+
+    document.getElementById('logout-button')?.addEventListener('click', () => {
+        // ... existing logout logic ...
+        
+        // After logout, update save button visibility
+        if (typeof window.actualizarVisibilidadBotonGuardar === 'function') {
+            window.actualizarVisibilidadBotonGuardar('');
+        }
+    });
+});

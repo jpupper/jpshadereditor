@@ -1,3 +1,14 @@
+/*Estamos haciendo una aplicación para manejar shaders en tiempo real. 
+
+La aplicación funciona con un sistema de usuarios donde te permite crear shaders cada shader es una sesion eso esta dado por el address. 
+
+Cada sesion actualiza en tiempo real el codigo de todas las sesiones que estan conectadas. 
+
+Ademas de eso se puede guardar el shader en el base de datos manejada por mongo db. 
+
+Cuando se guarda el shader también deberia guardarse una imagen. El modulo de la imagen no esta funcionando correctamente y la imagen no se esta guardando. */
+
+
 let canvas, gl, buffer, currentProgram, vertexPosition, screenVertexPosition;
 let parameters = { startTime: Date.now(), time: 0, mouseX: 0.5, mouseY: 0.5, screenWidth: 0, screenHeight: 0, fxrand: Math.random() };
 let surface = { centerX: 0, centerY: 0, width: 1, height: 1, lastX: 0, lastY: 0 };
@@ -5,20 +16,27 @@ let frontTarget, backTarget, screenProgram;
 let editor, fullscreenEditor, errorDisplay, fullscreenErrorDisplay;
 let isFullscreen = false;
 let lastValidProgram = null;
-const socket = io();
-let isBroadcastingUpdate = false;
+const socket = window.socketInstance; // Usar la instancia de socket existente
+let isBroadcastingUpdate = true;
+let isUserChange = true; // Nueva bandera para controlar si el cambio es del usuario
+let shaderParser = new ShaderParser(); // Instancia del parser de shaders
 
 init();
 animate();
 
 function init() {
+    
+    isBroadcastingUpdate = true;
     inicializarElementosDOM();
     inicializarContextosWebGL();
     inicializarEditores();
+    inicializarVistasUI();
     
     // Inicializar conexión Socket.IO
     socket.on('connect', () => {
         console.log('Conectado al servidor:', socket.id);
+        // Pedir el shader actual a los demás clientes
+        socket.emit("pedirShader");
     });
 
     socket.on('disconnect', () => {
@@ -44,6 +62,15 @@ function init() {
     // Configurar el evento change del dropdown
     document.getElementById('shader-dropdown').addEventListener('change', setActiveShader);
     document.getElementById('shader-dropdown-fullscreen').addEventListener('change', setActiveShader);
+
+    // Permitimos updates después de 2 segundos para asegurar que todo esté inicializado
+    
+    //Esto lo pongo así para que se habilite despues de un toque.
+    setTimeout(() => {
+        console.log("Habilitando updates después de inicialización...");
+        socket.emit("pedirShader");
+        isBroadcastingUpdate = false;
+    }, 2000);
 }
 
 function inicializarElementosDOM() {
@@ -79,8 +106,10 @@ function inicializarWebGL() {
 
     surface.buffer = gl.createBuffer();
 
+   
     createRenderTargets();
     compile();
+    
 }
 
 function inicializarEditores() {
@@ -96,6 +125,47 @@ function inicializarEditores() {
         theme: "monokai",
         lineNumbers: true
     });
+
+    // Manejar cambios en los editores
+    editor.on("change", (cm, change) => {
+        if (!isBroadcastingUpdate) {
+            compile();
+            // Solo enviar actualización si no estamos en broadcast
+            const nombre = document.getElementById('shader-name').value;
+            const autor = document.getElementById('shader-author').value;
+            enviarShaderUpdate(nombre, autor, cm.getValue(), cm.getCursor());
+        }
+    });
+
+    fullscreenEditor.on("change", (cm, change) => {
+        if (!isBroadcastingUpdate) {
+            compile();
+            // Solo enviar actualización si no estamos en broadcast
+            const nombre = document.getElementById('shader-name-fullscreen').value;
+            const autor = document.getElementById('shader-author-fullscreen').value;
+            enviarShaderUpdate(nombre, autor, cm.getValue(), cm.getCursor());
+        }
+    });
+}
+
+function inicializarVistasUI() {
+    const codeViewBtn = document.getElementById('code-view-btn');
+    const uiViewBtn = document.getElementById('ui-view-btn');
+    const editorContainer = document.getElementById('editor-container');
+    const uiContainer = document.getElementById('ui-container');
+
+    function setActiveView(isCode) {
+        // Actualizar estado de los botones
+        codeViewBtn.classList.toggle('active', isCode);
+        uiViewBtn.classList.toggle('active', !isCode);
+        
+        // Mostrar/ocultar contenedores
+        editorContainer.style.display = isCode ? 'block' : 'none';
+        uiContainer.style.display = isCode ? 'none' : 'block';
+    }
+
+    codeViewBtn.addEventListener('click', () => setActiveView(true));
+    uiViewBtn.addEventListener('click', () => setActiveView(false));
 }
 
 function configurarEventos() {
@@ -114,9 +184,6 @@ function configurarEventos() {
         parameters.mouseY = 1 - event.clientY / window.innerHeight;
     }, false);
 
-    editor.on("change", compile);
-    fullscreenEditor.on("change", compile);
-
     document.getElementById('fullscreen-button').addEventListener('click', entrarPantallaCompleta);
     document.getElementById('exit-fullscreen').addEventListener('click', salirPantallaCompleta);
     document.getElementById('toggle-editor').addEventListener('click', toggleEditor);
@@ -129,11 +196,15 @@ async function cargarShaderDesdeURL() {
     const isNewShader = params.get('newShader') === 'true';
     
     try {
+        // Asegurarnos que no se disparen updates durante la carga
+        const prevBroadcastState = isBroadcastingUpdate;
+        isBroadcastingUpdate = true;
+
         let shader;
         
         if (isNewShader) {
             // Para un nuevo shader, usar el contenido del shader default
-            const defaultResponse = await fetch('/api/shaders/default');
+            const defaultResponse = await fetch(`${CONFIG.API_URL}/api/shaders/default`);
             if (!defaultResponse.ok) {
                 throw new Error('No se pudo cargar el shader default');
             }
@@ -147,7 +218,7 @@ async function cargarShaderDesdeURL() {
             };
         } else {
             // Cargar shader existente
-            const response = await fetch(`/api/shaders/${shaderName}`);
+            const response = await fetch(`${CONFIG.API_URL}/api/shaders/${shaderName}`);
             if (!response.ok) {
                 throw new Error(`No se pudo cargar el shader ${shaderName}`);
             }
@@ -173,6 +244,12 @@ async function cargarShaderDesdeURL() {
         });
 
         compile();
+
+        // Restaurar el estado anterior de broadcasting
+        isBroadcastingUpdate = prevBroadcastState;
+        
+        // Actualizar visibilidad del botón de guardar
+        actualizarVisibilidadBotonGuardar(shader.autor);
     } catch (error) {
         console.error('Error cargando shader desde URL:', error);
         mostrarError('Error', 'No se pudo cargar el shader especificado');
@@ -192,26 +269,43 @@ function onWindowResize() {
 }
 
 function compile() {
+    const source = editor.getValue();
+    
+    // Parsear los uniforms del shader
+    shaderParser.parseShader(source);
+
     let program = gl.createProgram();
     let fragment = isFullscreen ? fullscreenEditor.getValue() : editor.getValue();
     let vertex = document.getElementById('surfaceVertexShader').textContent;
 
-    let vs = createShader(vertex, gl.VERTEX_SHADER);
-    let fs = createShader(fragment, gl.FRAGMENT_SHADER);
+    const vs = createShader(vertex, gl.VERTEX_SHADER);
+    const fs = createShader(fragment, gl.FRAGMENT_SHADER);
 
-    if (vs == null || fs == null) return null;
+    if (vs === null || fs === null) return null;
 
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
-
     gl.deleteShader(vs);
     gl.deleteShader(fs);
-
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        mostrarError('ERROR linking program!', gl.getProgramInfoLog(program));
-        return;
+        mostrarError('Error al enlazar el programa', gl.getProgramInfoLog(program));
+        return null;
+    }
+
+    // Cachear ubicaciones de uniforms globales
+    program.uniformsCache = {};
+    program.uniformsCache['time'] = gl.getUniformLocation(program, 'time');
+    program.uniformsCache['mouse'] = gl.getUniformLocation(program, 'mouse');
+    program.uniformsCache['resolution'] = gl.getUniformLocation(program, 'resolution');
+    program.uniformsCache['fxrand'] = gl.getUniformLocation(program, 'fxrand');
+    program.uniformsCache['backbuffer'] = gl.getUniformLocation(program, 'backbuffer');
+
+    // Cachear ubicaciones de uniforms personalizados
+    const customUniforms = shaderParser.getUniformValues();
+    for (const name of Object.keys(customUniforms)) {
+        program.uniformsCache[name] = gl.getUniformLocation(program, name);
     }
 
     if (currentProgram) {
@@ -221,12 +315,6 @@ function compile() {
     currentProgram = program;
     lastValidProgram = program;
 
-    cacheUniformLocation(program, 'time');
-    cacheUniformLocation(program, 'mouse');
-    cacheUniformLocation(program, 'resolution');
-    cacheUniformLocation(program, 'backbuffer');
-    cacheUniformLocation(program, 'fxrand');
-
     vertexPosition = gl.getAttribLocation(currentProgram, "position");
     gl.enableVertexAttribArray(vertexPosition);
 
@@ -234,15 +322,16 @@ function compile() {
     mostrarError('', '');
 
     // Emitir evento de edición con todos los datos necesarios
-    
-    if(!isBroadcastingUpdate)
-    socket.emit('shaderUpdate', {
-        id: socket.id,
-        nombre: document.getElementById('shader-name').value, // Obtener el nombre del shader
-        autor: document.getElementById('shader-author').value, // Obtener el autor del shader
-        contenido: fragment, // Incluir el contenido del shader
-        timestamp: new Date() // Mantener el timestamp
-    });
+    //isBroadcastingUpdate = true;
+    if(!isBroadcastingUpdate){
+        socket.emit('shaderUpdate', {
+            id: socket.id,
+            nombre: document.getElementById('shader-name').value, // Obtener el nombre del shader
+            autor: document.getElementById('shader-author').value, // Obtener el autor del shader
+            contenido: fragment, // Incluir el contenido del shader
+            timestamp: new Date() // Mantener el timestamp
+        });
+    }
 }
 
 function cacheUniformLocation(program, label) {
@@ -305,10 +394,20 @@ function render() {
 
     gl.useProgram(currentProgram);
 
+    // Establecer uniforms globales
     gl.uniform1f(currentProgram.uniformsCache['time'], parameters.time / 1000);
     gl.uniform2f(currentProgram.uniformsCache['mouse'], parameters.mouseX, parameters.mouseY);
     gl.uniform2f(currentProgram.uniformsCache['resolution'], parameters.screenWidth, parameters.screenHeight);
     gl.uniform1f(currentProgram.uniformsCache['fxrand'], parameters.fxrand);
+
+    // Establecer uniforms personalizados
+    const customUniforms = shaderParser.getUniformValues();
+    for (const [name, value] of Object.entries(customUniforms)) {
+        const location = currentProgram.uniformsCache[name];
+        if (location !== undefined) {
+            gl.uniform1f(location, value);
+        }
+    }
 
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
@@ -438,50 +537,35 @@ function toggleEditor() {
 }
 
 function fetchShaders() {
-    console.log('Iniciando fetchShaders...');
+    console.log('Iniciando fetchShaders...'); // Debug log
     
-    fetch('/api/shaders')
-        .then(async response => {
+    fetch(`${CONFIG.API_URL}/api/shaders`)
+        .then(response => {
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Error en la respuesta del servidor');
             }
             return response.json();
         })
         .then(shaders => {
-            console.log('Shaders recibidos:', shaders);
+            console.log('Shaders obtenidos:', shaders); // Debug log
             
-            // Actualizar ambos dropdowns
+            // Limpiar dropdowns
             ['shader-dropdown', 'shader-dropdown-fullscreen'].forEach(dropdownId => {
                 const dropdown = document.getElementById(dropdownId);
-                if (!dropdown) {
-                    console.error(`No se encontró el elemento ${dropdownId}`);
-                    return;
-                }
-                
                 dropdown.innerHTML = '<option value="">Selecciona un shader</option>';
                 
-                if (Array.isArray(shaders)) {
-                    shaders.forEach(shader => {
-                        if (shader && shader.nombre) {
-                            const option = document.createElement('option');
-                            option.value = shader.nombre;
-                            option.textContent = shader.nombre;
-                            dropdown.appendChild(option);
-                        }
-                    });
-                }
+                // Agregar shaders al dropdown
+                shaders.forEach(shader => {
+                    const option = document.createElement('option');
+                    option.value = shader.nombre;
+                    option.textContent = shader.nombre;
+                    dropdown.appendChild(option);
+                });
             });
         })
         .catch(error => {
-            console.error('Error completo en fetchShaders:', error);
-            ['shader-dropdown', 'shader-dropdown-fullscreen'].forEach(dropdownId => {
-                const dropdown = document.getElementById(dropdownId);
-                if (dropdown) {
-                    dropdown.innerHTML = '<option value="">Error al cargar shaders</option>';
-                }
-            });
+            console.error('Error al obtener shaders:', error);
+            mostrarError('Error', 'No se pudieron cargar los shaders');
         });
 }
 
@@ -489,110 +573,106 @@ function setActiveShader(event) {
     const shaderName = event.target.value;
     if (!shaderName) return;
 
-    // Sincronizar la selección en ambos dropdowns
-    const otherDropdownId = event.target.id === 'shader-dropdown' ? 
-        'shader-dropdown-fullscreen' : 'shader-dropdown';
-    document.getElementById(otherDropdownId).value = shaderName;
-
-    // Actualizar la URL
-    actualizarURL(shaderName);
-
-    // Fetch the shader code and metadata from the server
-    fetch(`/api/shaders/${shaderName}`)
-        .then(response => response.json())
-        .then(shader => {
-            // Actualizar campos de nombre y autor en ambas vistas
-            ['', '-fullscreen'].forEach(suffix => {
-                document.getElementById(`shader-name${suffix}`).value = shader.nombre;
-                document.getElementById(`shader-author${suffix}`).value = shader.autor;
-            });
-
-            // Actualizar editores con el contenido
-            editor.setValue(shader.contenido);
-            fullscreenEditor.setValue(shader.contenido);
-            
-            // Asegurarse de que el canvas correcto esté activo
-            canvas = isFullscreen ? 
-                document.getElementById('glsl-canvas-fullscreen') : 
-                document.getElementById('glsl-canvas');
-            gl = canvas.getContext('webgl');
-            
-            inicializarWebGL();
-            compile();
+    fetch(`${CONFIG.API_URL}/api/shaders/${shaderName}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
         })
-        .catch(error => console.error('Error setting active shader:', error));
+        .then(data => {
+            actualizarCamposShader(data);
+            actualizarURL(shaderName);
+        })
+        .catch(error => {
+            console.error('Error al cargar shader:', error);
+            mostrarError('Error', 'No se pudo cargar el shader');
+        });
 }
 
-window.addEventListener('resize', manejarCambioOrientacion);
+function actualizarCamposShader(shader) {
+    if (shader) {
+        document.getElementById('shader-name').value = shader.nombre || '';
+        document.getElementById('shader-author').value = shader.autor || '';
+        document.getElementById('shader-name-fullscreen').value = shader.nombre || '';
+        document.getElementById('shader-author-fullscreen').value = shader.autor || '';
+        
+        // Actualizar visibilidad del botón de guardar
+        actualizarVisibilidadBotonGuardar(shader.autor);
+        
+        // Actualizar contenido del editor
+        editor.setValue(shader.contenido);
+        fullscreenEditor.setValue(shader.contenido);
+        compile();
+    }
+}
 
 async function saveShader() {
-    const shaderName = document.getElementById('shader-name').value;
-    const userName = document.getElementById('shader-author').value;
-    const shaderContent = editor.getValue();
+    const nombre = document.getElementById('shader-name').value;
+    const autor = document.getElementById('shader-author').value;
+    const contenido = editor.getValue();
+    const canvas = document.getElementById('glsl-canvas');
 
-    if (!shaderName || !userName || !shaderContent) {
-        console.error('Campos incompletos');
+    if (!nombre || !autor || !contenido) {
+        mostrarError('Error', 'Por favor completa todos los campos');
         return;
     }
 
     try {
         // Guardar el shader
-        const response = await fetch('/api/shaders', {
+        const response = await fetch(`${CONFIG.API_URL}/api/shaders`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                nombre: shaderName,
-                autor: userName,
-                contenido: shaderContent
+                nombre: nombre,
+                autor: autor,
+                contenido: contenido
             })
         });
 
-        const result = await response.json();
-        
         if (!response.ok) {
-            console.error('Error al guardar el shader:', result.error);
-            return;
+            throw new Error('Error al guardar el shader');
         }
 
-        // Capturar y guardar la imagen del canvas
-        const currentCanvas = isFullscreen ? 
-            document.getElementById('glsl-canvas-fullscreen') : 
-            document.getElementById('glsl-canvas');
+        const data = await response.json();
+        console.log('Shader guardado:', data);
+
+        // Intentar guardar la imagen
+        try {
+            const imageData = canvas.toDataURL('image/png');
             
-        // Asegurarnos de que el canvas esté renderizado antes de capturar la imagen
-        requestAnimationFrame(async () => {
-            const dataURL = currentCanvas.toDataURL('image/png');
+            // Enviar la imagen directamente como base64
+            const imageResponse = await fetch(`${CONFIG.API_URL}/api/save-image`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageData,
+                    name: nombre
+                })
+            });
 
-            try {
-                const response = await fetch('/api/save-image', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        image: dataURL,
-                        name: shaderName
-                    }),
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    console.error('Error al guardar la imagen:', data.message);
-                }
-            } catch (error) {
-                console.error('Error al guardar la imagen:', error);
+            if (!imageResponse.ok) {
+                const errorData = await imageResponse.json();
+                throw new Error(errorData.error || 'Error al guardar la imagen');
             }
 
-            // Actualizar la URL para quitar el parámetro newShader
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('newShader');
-            window.history.replaceState({}, '', newUrl);
-        });
+            const imageResult = await imageResponse.json();
+            console.log('Imagen guardada en:', imageResult.path);
+        } catch (error) {
+            console.error('Error al guardar la imagen:', error);
+            mostrarError('Advertencia', 'El shader se guardó pero hubo un problema al guardar la imagen de previsualización');
+        }
+
+        mostrarError('Éxito', 'Shader guardado correctamente');
+        actualizarURL(nombre);
+        fetchShaders();  // Actualizar la lista de shaders
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al guardar:', error);
+        mostrarError('Error', 'No se pudo guardar el shader');
     }
 }
 
@@ -627,34 +707,47 @@ function compartirShader() {
 }
 
 function enviarShaderUpdate(nombre, autor, contenido, cursorPos) {
-    socket.emit('shaderUpdate', {
-        id: socket.id,
-        nombre: nombre,
-        autor: autor,
-        contenido: contenido,
-        cursorPos: cursorPos,
-        timestamp: new Date()
-    });
+    console.log("ENVIA SOCKET SHADER UPDATE");
+    if(!isBroadcastingUpdate){
+        //window.emitShaderUpdate(nombre, autor, contenido, cursorPos);
+    }
 }
 
 socket.on("pedirShader",(data) =>{
     console.log("SE CONECTO OTRO CLIENTE QUE NO SOY YO")
 
     const shaderName = document.getElementById('shader-name').value;
+    const autor = document.getElementById('shader-author').value;
+    const contenido = editor.getValue();
+    const cursorPos = editor.getCursor();
+
+    // Enviar el shader actual al nuevo cliente
+    enviarShaderUpdate(shaderName, autor, contenido, cursorPos);
+});
+
+socket.on("enviarShaderActual", (data) => {
+    console.log("Servidor solicita enviar shader actual al cliente:", data.requestingClient);
+    
+    const shaderName = document.getElementById('shader-name').value;
     const shaderAuthor = document.getElementById('shader-author').value;
-    const shaderContent = editor.getValue();
-    
-    // Actualizar el contenido del fullscreen editor
-    fullscreenEditor.setValue(shaderContent);
-    
-    console.log("SHADER NAME MIO" + shaderName);
-    
-    console.log("SHADER AUTHOR MIO" + shaderAuthor);
+    const _contenido = editor.getValue();
+    const cursorPos = editor.getCursor();
+    /*if(!isBroadcastingUpdate){
+        window.emitShaderUpdate(nombre, autor, contenido, cursorPos);
+    }*/
 
-    console.log("SHADER CONTENT MIO" + shaderContent);
-    // Enviar la actualización al servidor
-    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, editor.getCursor());
-
+    //if(!isBroadcastingUpdate){
+    console.log("REENVIA EL SHADER ACTUAL");
+    socket.emit('shaderUpdate', {
+        id: socket.id,
+        nombre: document.getElementById('shader-name').value, // Obtener el nombre del shader
+        autor: document.getElementById('shader-author').value, // Obtener el autor del shader
+        contenido: _contenido, // Incluir el contenido del shader
+        timestamp: new Date() // Mantener el timestamp
+    });
+    //}
+    // Enviar el shader actual
+    //enviarShaderUpdate(shaderName, shaderAuthor, contenido, cursorPos);
 });
 
 socket.on('shaderUpdate', (data) => {
@@ -663,15 +756,16 @@ socket.on('shaderUpdate', (data) => {
     const params = new URLSearchParams(window.location.search);
     const shaderName = params.get('shader') || 'default';
 
+    
     if (data.nombre === shaderName) {
         console.log("COINCIDE EL NOMBRE");
         console.log("EL SHADER ES : " + data.contenido);
 
         // Evitar el feedback loop
+        //isBroadcastingUpdate = true;
         isBroadcastingUpdate = true;
-        
         // Guardar posición actual del cursor
-        const currentCursor = editor.getCursor();
+       const currentCursor = editor.getCursor();
         const currentFullscreenCursor = fullscreenEditor.getCursor();
         
         // Actualizar contenido
@@ -681,10 +775,54 @@ socket.on('shaderUpdate', (data) => {
         // Restaurar posición del cursor
         editor.setCursor(currentCursor);
         fullscreenEditor.setCursor(currentFullscreenCursor);
+        compile();
+        
         
         isBroadcastingUpdate = false;
+        
     } else {
         console.log("NO COINCIDE EL NOMBRE");
+    }
+});
+
+socket.on("pedirShader", () => {
+    console.log("Alguien pidió el shader actual");
+    
+    // Solo enviar si estamos editando activamente (tenemos contenido)
+    const shaderContent = editor.getValue().trim();
+    if (shaderContent) {
+        const shaderName = document.getElementById('shader-name').value;
+        const shaderAuthor = document.getElementById('shader-author').value;
+        
+        console.log("Enviando mi shader actual:", shaderName);
+        socket.emit("shaderUpdate", {
+            nombre: shaderName,
+            autor: shaderAuthor,
+            contenido: shaderContent,
+            cursorPos: editor.getCursor()
+        });
+    }
+});
+
+// Escuchar actualizaciones de uniforms
+socket.on('uniformsUpdate', (data) => {
+    const params = new URLSearchParams(window.location.search);
+    const shaderName = params.get('shader') || 'default';
+    console.log("Uniform update received:", data);
+
+    if (data.nombre === shaderName) {
+        // Evitar el feedback loop
+        window.isBroadcastingUpdate = true;
+
+        // Actualizar todos los uniforms
+        for (const [uniformName, value] of Object.entries(data.uniforms)) {
+            shaderParser.updateUniformValue(uniformName, value);
+        }
+
+        // Recompilar el shader
+        compile();
+
+       window.isBroadcastingUpdate = false;
     }
 });
 
@@ -698,9 +836,9 @@ editor.on("keydown", (instance, event) => {
     // Actualizar el contenido del fullscreen editor
     fullscreenEditor.setValue(shaderContent);
     fullscreenEditor.setCursor(cursorPos);
-    
+    compile();
     // Enviar la actualización al servidor
-    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
+    //enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
 });
 
 // Emitir evento cuando se modifica el contenido del fullscreen editor desde el teclado
@@ -713,7 +851,88 @@ fullscreenEditor.on("keydown", (instance, event) => {
     // Actualizar el contenido del editor común
     editor.setValue(shaderContent);
     editor.setCursor(cursorPos);
-    
+    compile();
     // Enviar la actualización al servidor
-    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
+    //enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
 });
+
+// Nueva función para actualizar la visibilidad del botón de guardar
+function actualizarVisibilidadBotonGuardar(shaderAutor) {
+    const currentUser = document.querySelector('.username-display')?.textContent;
+    const saveButtons = [
+        document.getElementById('save-shader'),
+        document.getElementById('save-shader-fullscreen')
+    ];
+    
+    saveButtons.forEach(button => {
+        if (button) {
+            button.style.display = (currentUser && currentUser === shaderAutor) ? 'block' : 'none';
+        }
+    });
+}
+
+// Función para detectar el modo de visualización
+function detectViewMode() {
+    const height = window.innerHeight;
+    const width = window.innerWidth;
+    
+    if (height > width) {
+        document.body.setAttribute('data-mode', 'mobile');
+        console.log('Modo: mobile');
+        handleMobileMode();
+        return 'mobile';
+    } else if (document.fullscreenElement) {
+        document.body.setAttribute('data-mode', 'fullscreen');
+        console.log('Modo: fullscreen');
+        return 'fullscreen';
+    } else {
+        document.body.setAttribute('data-mode', 'common');
+        console.log('Modo: común');
+        return 'common';
+    }
+}
+
+// Función para manejar el modo mobile
+function handleMobileMode() {
+    const fullscreenButton = document.getElementById('fullscreen-button');
+    const editorSection = document.getElementById('editor-section');
+    const openEditorBtn = document.getElementById('open-editor');
+    const closeEditorBtn = document.getElementById('toggle-editor');
+    
+    // Ocultar botón de fullscreen
+    if (fullscreenButton) {
+        fullscreenButton.style.display = 'none';
+    }
+
+    // Configurar estado inicial
+    if (editorSection) {
+        editorSection.style.display = 'none';
+        openEditorBtn.style.display = 'block';
+        closeEditorBtn.style.display = 'none';
+    }
+
+    // Manejar apertura del editor
+    if (openEditorBtn) {
+        openEditorBtn.addEventListener('click', () => {
+            editorSection.style.display = 'block';
+            openEditorBtn.style.display = 'none';
+            closeEditorBtn.style.display = 'block';
+            console.log('Editor abierto en modo mobile');
+        });
+    }
+
+    // Manejar cierre del editor
+    if (closeEditorBtn) {
+        closeEditorBtn.addEventListener('click', () => {
+            editorSection.style.display = 'none';
+            closeEditorBtn.style.display = 'none';
+            openEditorBtn.style.display = 'block';
+            console.log('Editor cerrado en modo mobile');
+        });
+    }
+}
+
+// Agregar event listeners para detectar cambios
+window.addEventListener('resize', detectViewMode);
+window.addEventListener('load', detectViewMode);
+document.addEventListener('fullscreenchange', detectViewMode);

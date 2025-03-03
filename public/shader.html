@@ -10,11 +10,20 @@
 </head>
 <body>
     <div id="main-container" class="container">
-        <div id="editor-container">
-            <textarea id="glsl-editor">
+        <div id="editor-section">
+            <div class="view-toggle">
+                <button id="code-view-btn" class="view-btn active">Code</button>
+                <button id="ui-view-btn" class="view-btn">UI</button>
+            </div>
+            <div id="editor-container">
+                <textarea id="glsl-editor">
 // Tu shader por defecto aquí
-            </textarea>
-            <div id="error-display"></div>
+                </textarea>
+                <div id="error-display"></div>
+            </div>
+            <div id="ui-container" style="display: none;">
+                <div id="uniform-sliders"></div>
+            </div>
         </div>
         <div id="canvas-container">
             <canvas id="glsl-canvas"></canvas>
@@ -24,7 +33,7 @@
     
     <div id="shader-controls">
         <select id="shader-dropdown">
-            <option value="">Selecciona un shader</option>
+            <option value="">Selecciona un sh</option>
         </select>
         <div class="shader-save-controls" id="shader-save-controls">
             <input type="text" id="shader-name" placeholder="Nombre del shader" class="shader-input">
@@ -36,20 +45,27 @@
     <div id="fullscreen-container">
         <canvas id="glsl-canvas-fullscreen"></canvas>
         <div id="fullscreen-editor-container">
+            <div class="view-toggle-fullscreen">
+                <button id="code-view-btn-fullscreen" class="view-btn active">Code</button>
+                <button id="ui-view-btn-fullscreen" class="view-btn">UI</button>
+            </div>
             <div id="fullscreen-editor"></div>
             <div id="fullscreen-error-display"></div>
+            <div id="ui-container-fullscreen" style="display: none;">
+                <div id="uniform-sliders-fullscreen"></div>
+            </div>
         </div>
         <button id="exit-fullscreen">Salir de pantalla completa</button>
         <button id="toggle-editor">Cerrar Editor</button>
         <button id="open-editor">Abrir Editor</button>
         <div id="shader-controls-fullscreen">
             <select id="shader-dropdown-fullscreen">
-                <option value="">Selecciona un shader</option>
+                <option value="">Selecciona un sh</option>
             </select>
             <div class="shader-save-controls">
                 <input type="text" id="shader-name-fullscreen" placeholder="Nombre del shader" class="shader-input">
                 <input type="text" id="shader-author-fullscreen" placeholder="Autor" class="shader-input">
-                <button id="save-shader-fullscreen" class="shader-button">Guardar Shader</button>
+                <button id="save-shader-fullscreen" class="shader-button">Guardar Shaderawefawefwaef</button>
             </div>
         </div>
     </div>
@@ -65,11 +81,15 @@
         }
     </script>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="js/codemirror.js"></script>
-    <script src="js/clike.js"></script>
+    
+    <script src="js/lib/codemirror.js"></script>
+    <script src="js/lib/clike.js"></script>
+    <script src="js/lib/socket.js"></script>
     <script src="js/auth-ui.js"></script>
     <script src="js/userconnections.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/socket-config.js"></script>
+    <script src="js/shaderparser.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>

@@ -873,10 +873,8 @@ function actualizarVisibilidadBotonGuardar(shaderAutor) {
 
 // Función para detectar el modo de visualización
 function detectViewMode() {
-    const height = window.innerHeight;
-    const width = window.innerWidth;
     
-    if (height > width) {
+    if (esMobile()) {
         document.body.setAttribute('data-mode', 'mobile');
         console.log('Modo: mobile');
         handleMobileMode();
@@ -899,6 +897,8 @@ function handleMobileMode() {
     const openEditorBtn = document.getElementById('open-editor');
     const closeEditorBtn = document.getElementById('toggle-editor');
     
+    entrarPantallaCompleta();
+
     // Ocultar botón de fullscreen
     if (fullscreenButton) {
         fullscreenButton.style.display = 'none';

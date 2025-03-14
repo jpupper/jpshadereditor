@@ -71,7 +71,6 @@
     background-color: var(--button-bg);
 }
 
-
 #user-container, #button-container {
     position: absolute;
     top: 10px;
@@ -166,7 +165,6 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Estilo para el cuadro de diálogo de inicio de sesión */
 #auth-container {
     position: fixed;
     top: 10px;
@@ -175,41 +173,110 @@
 }
 
 .auth-buttons {
-    background-color: rgba(0, 0, 0, 0.7);
-    border-radius: 4px;
-    padding: 4px;
-    min-width: 80px;
+    position: relative;
+    background-color: transparent;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.auth-controls {
+.auth-buttons:hover .auth-controls,
+.auth-buttons:hover .user-info {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.auth-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--primary-color);
+    background-color: var(--button-bg);
+    padding: 8px;
+    border-radius: 50%;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+    transition: all 0.3s ease;
+}
+
+.auth-icon:hover {
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+    transform: scale(1.05);
+}
+
+.auth-controls,
+.user-info {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 120px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.auth-controls::before,
+.user-info::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 16px;
+    width: 12px;
+    height: 12px;
+    background-color: rgba(0, 0, 0, 0.85);
+    transform: rotate(45deg);
+    border-left: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .auth-button {
-    width: 80px;
-    height: 32px;
-    padding: 5px 0;
-    background-color: var(--button-bg);
+    width: 100%;
+    padding: 8px 12px;
+    background-color: transparent;
     color: var(--text-color);
-    border: 1px solid transparent;
-    border-radius: 3px;
-    font-size: 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.2s ease;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: left;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0;
+    gap: 8px;
 }
 
 .auth-button:hover {
-    background-color: var(--hover-color);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    background-color: var(--button-bg);
+    color: var(--primary-color);
+    transform: translateX(3px);
+}
+
+.username-display {
+    color: var(--primary-color);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 4px;
+    display: block;
+    width: 100%;
+    text-align: left;
 }
 
 .auth-modal {

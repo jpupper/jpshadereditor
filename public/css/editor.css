@@ -224,8 +224,8 @@ body[data-mode="mobile"] #ui-container {
 /* Controles en mobile */
 body[data-mode="mobile"] #open-editor, body[data-mode="mobile"] #toggle-editor {
     position: fixed;
-    top: 105px;
-    right: 10px;
+    top: 0px;
+    right: 70px;
     z-index: 1000;
     background: var(--button-bg);
     color: var(--text-color);
@@ -504,7 +504,7 @@ body[data-mode="common"] .container {
 
 #shader-controls-fullscreen {
     position: absolute;
-    bottom: 10px;
+    /* bottom: 10px; */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -512,6 +512,8 @@ body[data-mode="common"] .container {
     align-items: center;
     gap: 10px;
     z-index: 1002;
+    bottom: 2px;
+    padding: 10px;
 }
 
 #fetch-shaders-button, #shader-dropdown,
@@ -541,9 +543,10 @@ body[data-mode="common"] .container {
 /* Ajustes para modo móvil */
 @media (max-width: 768px) {
     #shader-controls-fullscreen {
-        bottom: 50px;
-        width: 90%;
+        /* bottom: 50px; */
+        width: 100%;
         flex-wrap: wrap;
+        background-color: black;
     }
 
     #shader-dropdown-fullscreen {

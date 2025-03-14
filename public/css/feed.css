@@ -1,0 +1,200 @@
+
+.shader-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.shader-card {
+    background: rgba(30, 30, 30, 0.6);
+    border-radius: 10px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    /* gap: 12px; */
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+    /* width: 50%; */
+}
+
+.shader-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(40, 40, 40, 0.7);
+}
+
+.shader-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--hover-color));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.shader-card:hover::before {
+    opacity: 1;
+}
+
+.shader-preview {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0px auto;
+}
+
+.shader-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.shader-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    margin-top: 12px;
+}
+
+.shader-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shader-author {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.shader-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shader-author {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shader-author img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.shader-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat i {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+#shaders-list {
+    display: grid; /* Usar grid para organizar los shaders */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Crear columnas responsivas con un ancho mínimo de 150px */
+    gap: 20px; /* Espacio entre los elementos de la grilla */
+    padding: 10px;
+    max-height: 80vh; /* Altura máxima para permitir el desplazamiento */
+    overflow-y: auto; /* Permitir desplazamiento vertical */
+    border: 1px solid var(--border-color); /* Opcional: agregar un borde */
+    border-radius: 5px; /* Opcional: bordes redondeados */
+    background-color: rgba(255, 255, 255, 0.1); /* Opcional: fondo semitransparente */
+    width: 100vw; /* Asegúrate de que el contenedor ocupe todo el ancho disponible */
+    max-width: 100%; /* Asegúrate de que no exceda el ancho del dispositivo */
+    margin: 0 auto; /* Centrar el contenedor en la página */
+}
+
+.shader-image {
+    width: 100px; /* Limitar el ancho de la imagen */
+    height: 100px; /* Limitar la altura de la imagen */
+    object-fit: contain; /* Mantener la proporción de la imagen */
+    border-radius: 5px; /* Bordes redondeados para la imagen */
+}
+
+.shader-author {
+    font-weight: bold;
+    /* margin-top: 5px; */
+    color: var(--text-color); /* Color del texto del autor */
+}
+
+.shader-link {
+    color: var(--primary-color); /* Color del texto del nombre del shader */
+    text-decoration: none; /* Sin subrayado */
+    font-weight: bold; /* Negrita para el nombre del shader */
+}
+
+.shader-link:hover {
+    text-decoration: none; /* Sin subrayado al pasar el mouse */
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 600px) {
+    #shaders-list {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Columnas más pequeñas en móviles */
+    }
+}
+
+/* Estilos para la lista de shaders del usuario */
+#my-shaders-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shader-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    gap: 15px;
+}

@@ -1,5 +1,75 @@
 /*TODO ESTO ES LO QUE ESTA EN EL SHADER.HTML*/
 
+/* Estilos para el editor de shaders */
+.container {
+    display: flex;
+    justify-content: space-between;
+    width: 95%;
+    max-width: 1600px;
+    height: 80vh;
+}
+
+#editor-container, #canvas-container {
+    width: 99%;
+    height: 99%;
+    margin: 5px;
+}
+
+.shader-save-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.shader-input {
+    background-color: rgba(138, 43, 226, 0.2);
+    border: 1px solid var(--button-bg);
+    color: var(--text-color);
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 3px;
+    transition: border-color 0.3s ease;
+    width: 150px;
+}
+
+.shader-input:focus {
+    outline: none;
+    border-color: var(--hover-color);
+}
+
+.shader-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.shader-button {
+    background-color: var(--button-bg);
+    border: none;
+    color: var(--text-color);
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.shader-button:hover {
+    background-color: var(--hover-color);
+    transform: scale(1.05);
+}
+
+/* Ajustes para modo móvil */
+@media (max-width: 768px) {
+    .shader-save-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .shader-input {
+        width: 120px;
+    }
+}
 
 #uniform-sliders {
     background-color: var(--background-color);
@@ -164,7 +234,6 @@ body[data-mode="mobile"] #open-editor, body[data-mode="mobile"] #toggle-editor {
     border-radius: 4px;
 }
 
-
 body[data-mode="mobile"] #shader-controls {
     position: fixed;
     bottom: 10px;
@@ -201,4 +270,283 @@ body[data-mode="fullscreen"] #fullscreen-container {
 body[data-mode="common"] .container {
     display: flex;
     flex-direction: row;
+}
+
+#editor-container, #canvas-container {
+    width: 99%;
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+}
+
+#glsl-editor, #glsl-canvas {
+    width: 100%;
+    flex-grow: 1;
+    margin-bottom: 10px;
+}
+
+#canvas-container {
+    position: relative;
+    width: 48%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#glsl-canvas {
+    width: 100%;
+    height: calc(100% - 40px);
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+}
+
+#fullscreen-canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#fullscreen-button, #exit-fullscreen, #toggle-editor, #open-editor {
+    background-color: var(--button-bg);
+    border: none;
+    color: var(--text-color);
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 2px 1px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#fullscreen-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+#fullscreen-button:hover, #exit-fullscreen:hover, #toggle-editor:hover, #open-editor:hover {
+    background-color: var(--hover-color);
+    transform: scale(1.05);
+}
+
+#fullscreen-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+    z-index: 1000;
+    overflow: hidden;
+    flex-direction: row;
+}
+
+#glsl-canvas-fullscreen {
+    width: 100%;
+    height: 100%;
+}
+
+#fullscreen-editor-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#fullscreen-editor {
+    flex-grow: 1;
+    height: calc(100% - 30px);
+    font-size: var(--fullscreen-font-size);
+}
+
+#fullscreen-error-display {
+    height: 30px;
+    position: absolute;
+    bottom: 50px;
+    left: 10px;
+    color: red;
+    z-index: 1002;
+}
+
+#exit-fullscreen {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1002;
+    display: block;
+}
+
+#toggle-editor, #open-editor {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1002;
+}
+
+#error-display {
+    color: red;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.CodeMirror {
+    height: 100% !important;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Estilos para el cursor del editor */
+.CodeMirror-cursor {
+    border-left: 2px solid #00ff00 !important;
+    border-right: none;
+    width: 2px;
+    height: 20px !important;
+}
+
+.CodeMirror .CodeMirror-cursors {
+    z-index: 3;
+}
+
+/* Estilo para el cursor cuando el editor está enfocado */
+.CodeMirror-focused .CodeMirror-cursor {
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Estilos específicos para el editor en pantalla completa */
+#fullscreen-editor .CodeMirror {
+    background-color: rgba(0, 0, 0, 0.0) !important;
+    font-size: var(--fullscreen-font-size) !important;
+}
+
+#fullscreen-editor .CodeMirror-gutters {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    width: 40px !important;
+}
+
+#fullscreen-editor .CodeMirror-linenumbers {
+    width: 36px !important;
+}
+
+#fullscreen-editor .CodeMirror-linenumber {
+    padding: 0 3px 0 5px !important;
+    min-width: 20px;
+    text-align: right;
+    color: #606060;
+}
+
+#fullscreen-editor .CodeMirror-sizer {
+    margin-left: 40px !important;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+
+    .container {
+        width: 100%;
+        height: 100vh;
+        flex-direction: column;
+    }
+
+    #editor-container, #canvas-container {
+        width: 100%;
+        height: 50%;
+    }
+
+    #glsl-canvas {
+        height: calc(100% - 40px);
+    }
+
+    #fullscreen-button {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+
+    #fullscreen-editor-container {
+        width: 100%;
+        height: 100vh;
+    }
+
+    #fullscreen-editor {
+        font-size: 12px;
+    }
+}
+
+#shader-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+}
+
+#shader-controls-fullscreen {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    z-index: 1002;
+}
+
+#fetch-shaders-button, #shader-dropdown,
+#fetch-shaders-button-fullscreen, #shader-dropdown-fullscreen {
+    background-color: var(--button-bg);
+    border: none;
+    color: var(--text-color);
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#shader-dropdown, #shader-dropdown-fullscreen {
+    width: 200px;
+}
+
+#fetch-shaders-button:hover, #shader-dropdown:hover,
+#fetch-shaders-button-fullscreen:hover, #shader-dropdown-fullscreen:hover {
+    background-color: var(--hover-color);
+    transform: scale(1.05);
+}
+
+/* Ajustes para modo móvil */
+@media (max-width: 768px) {
+    #shader-controls-fullscreen {
+        bottom: 50px;
+        width: 90%;
+        flex-wrap: wrap;
+    }
+
+    #shader-dropdown-fullscreen {
+        width: 150px;
+    }
 }

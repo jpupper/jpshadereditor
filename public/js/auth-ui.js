@@ -8,14 +8,14 @@ function initializeAuthUI() {
     authContainer.innerHTML = `
         <div class="auth-buttons">
             <div class="auth-controls">
-                <button type="button" class="auth-button" id="login-button">Iniciar Sesión</button>
-                <button type="button" class="auth-button" id="signup-button">Registrarse</button>
+                <button type="button" class="auth-button" id="login-button">Login</button>
+                <button type="button" class="auth-button" id="signup-button">Register</button>
             </div>
             
             <div class="user-info" style="display: none;">
                 <span class="username-display"></span>
-                <button type="button" class="auth-button" id="profile-button">Mi Perfil</button>
-                <button type="button" class="auth-button" id="logout-button">Cerrar Sesión</button>
+                <button type="button" class="auth-button" id="profile-button">Profile</button>
+                <button type="button" class="auth-button" id="logout-button">Logout</button>
             </div>
         </div>
 

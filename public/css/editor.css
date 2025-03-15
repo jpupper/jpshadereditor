@@ -516,6 +516,50 @@ body[data-mode="common"] .container {
     padding: 10px;
 }
 
+#shader-controls-ui, #shader-controls-ui-fullscreen {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #444;
+}
+
+#shader-controls-ui select, #shader-controls-ui-fullscreen select {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+#shader-controls-ui .shader-save-controls, #shader-controls-ui-fullscreen .shader-save-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#shader-controls-ui .shader-input, #shader-controls-ui-fullscreen .shader-input {
+    flex: 1;
+    padding: 8px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+#shader-controls-ui .shader-button, #shader-controls-ui-fullscreen .shader-button {
+    padding: 8px 15px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#shader-controls-ui .shader-button:hover, #shader-controls-ui-fullscreen .shader-button:hover {
+    background: #45a049;
+}
+
 #fetch-shaders-button, #shader-dropdown,
 #fetch-shaders-button-fullscreen, #shader-dropdown-fullscreen {
     background-color: var(--button-bg);

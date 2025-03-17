@@ -163,6 +163,15 @@ function inicializarVistasUI() {
         // Mostrar/ocultar contenedores
         editorContainer.style.display = isCode ? 'block' : 'none';
         uiContainer.style.display = isCode ? 'none' : 'block';
+
+        // Actualizar el contenido del editor cuando volvemos a la vista de código
+        if (isCode) {
+            const currentShader = document.getElementById('shader-dropdown').value;
+            if (currentShader) {
+                compile();
+                editor.refresh();
+            }
+        }
     }
 
     codeViewBtn.addEventListener('click', () => setActiveView(true));

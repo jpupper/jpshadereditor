@@ -7,6 +7,6 @@ const CONFIG = {
         return this.isLocal ? 'http://localhost:3250' : 'https://vps-4455523-x.dattaweb.com';
     },
     get BASE_URL() {
-        return '/shader';
+        return this.isLocal ? '/shader' : '/jpshadereditor';
     }
 };

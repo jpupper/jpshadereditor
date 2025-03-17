@@ -72,7 +72,7 @@ function updateConnectionsList(connections) {
         const shaderInfo = activeShader || {};
         
         const shaderLink = shaderInfo.nombre 
-            ? `<a href="shader.html?shader=${encodeURIComponent(shaderInfo.nombre)}" target="_blank">${shaderInfo.nombre}</a>` 
+            ? `<a href="${CONFIG.BASE_URL}/shader.html?shader=${encodeURIComponent(shaderInfo.nombre)}" target="_blank">${shaderInfo.nombre}</a>` 
             : 'Sin shader activo';
         
         const contentPreview = shaderInfo.contenido 

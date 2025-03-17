@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const randomIndex = Math.floor(Math.random() * nombresVisuales.length);
                 const randomName = nombresVisuales[randomIndex];
                 // Redirigir a shader.html con el nombre aleatorio y newShader=true
-                window.location.href = `shader.html?shader=${randomName}&newShader=true`;
+                window.location.href = `${CONFIG.BASE_URL}/shader.html?shader=${randomName}&newShader=true`;
             });
         }
 
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         editButton.className = 'edit-shader-btn';
                         editButton.textContent = 'Editar';
                         editButton.onclick = () => {
-                            window.location.href = `shader.html?shader=${encodeURIComponent(shader.nombre)}`;
+                            window.location.href = `${CONFIG.BASE_URL}/shader.html?shader=${encodeURIComponent(shader.nombre)}`;
                         };
                         
                         // Agregar elementos al item

@@ -97,7 +97,7 @@ html body[data-mode="fullscreen"] #uniform-sliders {
     border: none;
     padding: 15px;
     margin-top: 20px;
-    max-height: 70vh;
+    max-height: 78vh;
 }
 
 /* Solo aplicar scroll al contenedor en modo mobile y fullscreen */
@@ -496,7 +496,7 @@ body[data-mode="common"] .container {
 #toggle-editor, #open-editor {
     position: absolute;
     top: 10px;
-    right: 10px;
+    right: 70px;
     z-index: 1002;
 }
 

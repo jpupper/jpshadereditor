@@ -20,6 +20,7 @@ const socket = window.socketInstance; // Usar la instancia de socket existente
 let isBroadcastingUpdate = true;
 let isUserChange = true; // Nueva bandera para controlar si el cambio es del usuario
 let shaderParser = new ShaderParser(); // Instancia del parser de shaders
+let isSuperFullscreen = false;
 
 init();
 animate();
@@ -71,6 +72,13 @@ function init() {
         socket.emit("pedirShader");
         isBroadcastingUpdate = false;
     }, 2000);
+    
+    document.addEventListener('keydown', function(event) {
+        if (event.key.toLowerCase() === 'f') {
+            toggleSuperFullscreen();
+            event.preventDefault();
+        }
+    });
 }
 
 function inicializarElementosDOM() {
@@ -936,3 +944,21 @@ function handleMobileMode() {
 window.addEventListener('resize', detectViewMode);
 window.addEventListener('load', detectViewMode);
 document.addEventListener('fullscreenchange', detectViewMode);
+
+function toggleSuperFullscreen() {
+    isSuperFullscreen = !isSuperFullscreen;
+    document.body.setAttribute('data-mode', isSuperFullscreen ? 'super-fullscreen' : '');
+    
+    if (isSuperFullscreen) {
+        parameters.screenWidth = window.innerWidth;
+        parameters.screenHeight = window.innerHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    } else {
+        onWindowResize(); // Restaurar tamaño normal
+    }
+    
+    if (gl) {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+}

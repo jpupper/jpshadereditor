@@ -706,3 +706,29 @@ body[data-mode="common"] .container {
         width: 150px;
     }
 }
+
+/* Estilos para el modo super fullscreen */
+body[data-mode="super-fullscreen"] {
+    overflow: hidden;
+}
+
+body[data-mode="super-fullscreen"] #glsl-canvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+}
+
+body[data-mode="super-fullscreen"] #editor-container,
+body[data-mode="super-fullscreen"] #fullscreen-editor,
+body[data-mode="super-fullscreen"] #error-display,
+body[data-mode="super-fullscreen"] #fullscreen-error-display,
+body[data-mode="super-fullscreen"] #shader-controls,
+body[data-mode="super-fullscreen"] #toggle-editor,
+body[data-mode="super-fullscreen"] #open-editor,
+body[data-mode="super-fullscreen"] .login-container,
+body[data-mode="super-fullscreen"] #ui-container {
+    display: none !important;
+}

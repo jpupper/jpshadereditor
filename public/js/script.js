@@ -72,13 +72,6 @@ function init() {
         socket.emit("pedirShader");
         isBroadcastingUpdate = false;
     }, 2000);
-    
-    document.addEventListener('keydown', function(event) {
-        /*if (event.key.toLowerCase() === 'f') {
-            toggleSuperFullscreen();
-            event.preventDefault();
-        }*/
-    });
 }
 
 function inicializarElementosDOM() {
@@ -192,7 +185,18 @@ function configurarEventos() {
         parameters.mouseY = 1 - event.clientY / window.innerHeight;
     }, false);
 
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            if (isSuperFullscreen) {
+                toggleSuperFullscreen();
+            } else if (isFullscreen) {
+                salirPantallaCompleta();
+            }
+        }
+    });
+
     document.getElementById('fullscreen-button').addEventListener('click', entrarPantallaCompleta);
+    document.getElementById('super-fullscreen-button').addEventListener('click', toggleSuperFullscreen);
     document.getElementById('exit-fullscreen').addEventListener('click', salirPantallaCompleta);
     document.getElementById('toggle-editor').addEventListener('click', toggleEditor);
     document.getElementById('open-editor').addEventListener('click', toggleEditor);

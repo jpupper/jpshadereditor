@@ -1,5 +1,7 @@
 /*TODO ESTO ES LO QUE ESTA EN EL SHADER.HTML*/
-
+body {
+    overflow-y: hidden;
+}
 /* Estilos para el editor de shaders */
 .container {
     display: flex;

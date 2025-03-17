@@ -27,6 +27,13 @@
     background: var(--hover-color);
 }
 
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden !important;
+}
+
 body {
     font-family: 'Arial', sans-serif;
     background-color: #000000;
@@ -39,10 +46,8 @@ body {
     justify-content: center;
     align-items: flex-start;
     padding: 20px;
-    margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
-    overflow-y: auto;
 }
 
 .container {

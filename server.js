@@ -54,8 +54,8 @@ app.use(express.json({ limit: '50mb' })); // Límite para shaders grandes
 
 // Logging middleware para ver las rutas solicitadas
 app.use((req, res, next) => {
-    console.log('Requested URL:', req.url);
-    console.log('Full path:', path.join(__dirname, 'public', req.url));
+    //console.log('Requested URL:', req.url);
+   // console.log('Full path:', path.join(__dirname, 'public', req.url));
     next();
 });
 
@@ -220,6 +220,7 @@ app.post('/shader/api/register', async (req, res) => {
             username,
             email,
             password: hashedPassword,
+            registerDate: new Date()  // Agregar fecha de registro
         });
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
@@ -372,15 +373,79 @@ app.get('/shader/api/user-shaders/:username', async (req, res) => {
     }
 });
 
+app.get('/shader/api/users', async (req, res) => {
+    try {
+        const db = await connectToDatabaseWrapper();
+        const usersCollection = db.collection('users');
+        const users = await usersCollection.find({}, { 
+            projection: { 
+                username: 1, 
+                registerDate: 1,
+                _id: 0 
+            } 
+        }).toArray();
+        
+        console.log('Endpoint /shader/api/users llamado');
+        console.log('Usuarios encontrados:', users.length);
+        
+        // Asegurarse de que todos los usuarios tengan una fecha de registro
+        const usersWithDates = users.map(user => ({
+            ...user,
+            registerDate: user.registerDate || new Date()
+        }));
+        
+        res.json(usersWithDates);
+    } catch (error) {
+        console.error('Error en /shader/api/users:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+});
+
+app.delete('/shader/api/shaders/:nombre', async (req, res) => {
+    try {
+        const db = await connectToDatabaseWrapper();
+        const shadersCollection = db.collection('shaders');
+        const shaderName = req.params.nombre;
+
+        // Primero verificamos si el shader existe
+        const shader = await shadersCollection.findOne({ nombre: shaderName });
+        if (!shader) {
+            return res.status(404).json({ error: 'Shader no encontrado' });
+        }
+
+        // Eliminamos el shader de la base de datos
+        await shadersCollection.deleteOne({ nombre: shaderName });
+
+        // Intentamos eliminar la imagen preview si existe
+        const previewPath = path.join(__dirname, 'public', 'img', 'previews', `${shaderName}.png`);
+        try {
+            if (fs.existsSync(previewPath)) {
+                fs.unlinkSync(previewPath);
+            }
+        } catch (error) {
+            console.error('Error al eliminar la imagen preview:', error);
+            // No retornamos error aquí porque el shader ya fue eliminado
+        }
+
+        res.json({ message: 'Shader eliminado correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar el shader:', error);
+        res.status(500).json({ error: 'Error al eliminar el shader' });
+    }
+});
+
 app.get('/shader/api/connections', (req, res) => {
-    // Convertir el Map a un array de objetos con solo la información necesaria
-    const connections = Array.from(activeConnections.values()).map(connection => ({
-        id: connection.id,
-        connectTime: connection.connectTime,
-        lastActivity: connection.lastActivity,
-        currentShader: connection.currentShader
-    }));
-    res.json(connections);
+    try {
+        const connections = Array.from(activeConnections.entries()).map(([id, conn]) => ({
+            id,
+            ...conn,
+            shader: activeShaders.get(id)
+        }));
+        res.json(connections);
+    } catch (error) {
+        console.error('Error al obtener conexiones:', error);
+        res.status(500).json({ error: 'Error al obtener conexiones' });
+    }
 });
 
 // Configuración de Socket.IO

@@ -10,13 +10,52 @@
     <link rel="stylesheet" href="css/monokai.css">
 </head>
 <body>
-    <div id="main-container" class="admin-container">
-        <h1 class="admin-header">Panel de Administración</h1>
-        
-        <div id="total-connections">Cargando estadísticas...</div>
-        
-        <div id="connections-list">
-            <!-- Las conexiones se cargarán aquí dinámicamente -->
+    <div class="admin-container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="live">Live</button>
+            <button class="tab-btn" data-tab="shaders">Shaders</button>
+            <button class="tab-btn" data-tab="users">Users</button>
+        </div>
+
+        <div class="tab-content active" id="live-tab">
+            <h2>Conexiones en Vivo</h2>
+            <div id="total-connections">Cargando estadísticas...</div>
+            <div id="connections-list">
+                <!-- Las conexiones se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+
+        <div class="tab-content" id="shaders-tab">
+            <h2>Lista de Shaders</h2>
+            <div class="table-container">
+                <table id="shaders-table">
+                    <thead>
+                        <tr>
+                            <th>Preview</th>
+                            <th>Nombre</th>
+                            <th>Autor</th>
+                            <th>Código</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-content" id="users-tab">
+            <h2>Lista de Usuarios</h2>
+            <div class="table-container">
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Fecha de Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 

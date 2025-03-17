@@ -7,15 +7,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     initializeAdmin();
+    initializeTabs();
+    loadShadersList();
+    loadUsersList();
 });
 
+// Variables globales
 const connectionsList = document.getElementById('connections-list');
 const totalConnections = document.getElementById('total-connections');
-
-// Variable para almacenar las conexiones activas y sus shaders
 let activeConnections = [];
-let activeShaders = new Map(); // Mapa para mantener el estado de los shaders
+let activeShaders = new Map();
 
+// Manejo de pestañas
+function initializeTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Desactivar todas las pestañas
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Activar la pestaña seleccionada
+            tab.classList.add('active');
+            const targetId = `${tab.dataset.tab}-tab`;
+            document.getElementById(targetId).classList.add('active');
+        });
+    });
+}
+
+// Formateo de fechas
 function formatDate(date) {
     return new Date(date).toLocaleString('es-ES', {
         year: 'numeric',
@@ -27,6 +49,7 @@ function formatDate(date) {
     });
 }
 
+// Funciones para la pestaña Live
 function updateConnectionsList(connections) {
     if (!connectionsList || !connections) return;
     
@@ -41,21 +64,17 @@ function updateConnectionsList(connections) {
         const connectionCard = document.createElement('div');
         connectionCard.className = 'connection-card';
         
-        // Calcular tiempo de conexión
         const connectedTime = Math.floor((new Date() - new Date(conn.connectTime || Date.now())) / 1000);
         const minutes = Math.floor(connectedTime / 60);
         const seconds = connectedTime % 60;
         
-        // Obtener información del shader activo para esta conexión
         const activeShader = activeShaders.get(conn.id);
         const shaderInfo = activeShader || {};
         
-        // Crear el hipervínculo para el shader
         const shaderLink = shaderInfo.nombre 
             ? `<a href="shader.html?shader=${encodeURIComponent(shaderInfo.nombre)}" target="_blank">${shaderInfo.nombre}</a>` 
             : 'Sin shader activo';
         
-        // Truncar el contenido si es muy largo
         const contentPreview = shaderInfo.contenido 
             ? shaderInfo.contenido.substring(0, 50) + (shaderInfo.contenido.length > 50 ? '...' : '')
             : 'N/A';
@@ -80,6 +99,86 @@ function updateConnectionsList(connections) {
         `;
         connectionsList.appendChild(connectionCard);
     });
+}
+
+// Funciones para la pestaña Shaders
+async function deleteShader(nombre) {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/api/shaders/${encodeURIComponent(nombre)}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al eliminar el shader');
+        }
+
+        // Recargar la lista después de eliminar
+        loadShadersList();
+    } catch (error) {
+        console.error('Error al eliminar el shader:', error);
+        alert('Error al eliminar el shader. Por favor, intente nuevamente.');
+    }
+}
+
+async function loadShadersList() {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/api/shaders`);
+        if (!response.ok) throw new Error('Error al cargar shaders');
+        
+        const shaders = await response.json();
+        const tbody = document.querySelector('#shaders-table tbody');
+        tbody.innerHTML = '';
+        
+        shaders.forEach(shader => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <img src="${CONFIG.API_URL}/img/previews/${shader.nombre}.png" 
+                         alt="Preview de ${shader.nombre}" 
+                         class="shader-preview-img"
+                         onerror="this.src='img/default-preview.png'">
+                </td>
+                <td>${shader.nombre}</td>
+                <td>${shader.autor}</td>
+                <td>
+                    <div class="code-preview">${shader.contenido}</div>
+                </td>
+                <td>
+                    <button class="delete-btn" onclick="deleteShader('${shader.nombre}')">
+                        🗑️ Eliminar
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error al cargar la lista de shaders:', error);
+    }
+}
+
+// Funciones para la pestaña Users
+async function loadUsersList() {
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/api/users`);
+        if (!response.ok) throw new Error('Error al cargar usuarios');
+        
+        const users = await response.json();
+        const tbody = document.querySelector('#users-table tbody');
+        tbody.innerHTML = '';
+        
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.username}</td>
+                <td>${formatDate(user.registerDate || new Date())}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error al cargar la lista de usuarios:', error);
+        const tbody = document.querySelector('#users-table tbody');
+        tbody.innerHTML = '<tr><td colspan="2">Error al cargar usuarios</td></tr>';
+    }
 }
 
 function initializeAdmin() {
@@ -107,10 +206,8 @@ function initializeAdmin() {
 
     // Escuchar actualizaciones de shader
     socket.on('shaderUpdate', (data) => {
-        console.log('==================== SHADER UPDATE RECIBIDO ====================');
-        console.log('Data completa recibida:', data);
+        console.log('Shader update recibido:', data);
         
-        // Actualizar el mapa de shaders activos
         activeShaders.set(data.id, {
             nombre: data.nombre,
             autor: data.autor,
@@ -118,7 +215,12 @@ function initializeAdmin() {
             lastUpdate: new Date()
         });
         
-        // Forzar actualización inmediata de la UI
         updateConnectionsList(activeConnections);
     });
+
+    // Actualizar listas periódicamente
+    setInterval(() => {
+        loadShadersList();
+        loadUsersList();
+    }, 30000); // Actualizar cada 30 segundos
 }

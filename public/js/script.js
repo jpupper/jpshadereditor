@@ -74,10 +74,10 @@ function init() {
     }, 2000);
     
     document.addEventListener('keydown', function(event) {
-        if (event.key.toLowerCase() === 'f') {
+        /*if (event.key.toLowerCase() === 'f') {
             toggleSuperFullscreen();
             event.preventDefault();
-        }
+        }*/
     });
 }
 
@@ -647,6 +647,22 @@ async function saveShader() {
         const data = await response.json();
         console.log('Shader guardado:', data);
 
+        // Guardar el tamaño original del canvas
+        const originalWidth = canvas.width;
+        const originalHeight = canvas.height;
+        const originalStyle = canvas.style.cssText;
+
+        // Establecer un tamaño cuadrado fijo para la miniatura
+        const thumbnailSize = 256; // Tamaño fijo para la miniatura
+        canvas.width = thumbnailSize;
+        canvas.height = thumbnailSize;
+        canvas.style.width = `${thumbnailSize}px`;
+        canvas.style.height = `${thumbnailSize}px`;
+        gl.viewport(0, 0, thumbnailSize, thumbnailSize);
+
+        // Forzar un render con el nuevo tamaño
+        render();
+
         // Intentar guardar la imagen
         try {
             const imageData = canvas.toDataURL('image/png');
@@ -674,6 +690,13 @@ async function saveShader() {
             console.error('Error al guardar la imagen:', error);
             mostrarError('Advertencia', 'El shader se guardó pero hubo un problema al guardar la imagen de previsualización');
         }
+
+        // Restaurar el tamaño original del canvas
+        canvas.width = originalWidth;
+        canvas.height = originalHeight;
+        canvas.style.cssText = originalStyle;
+        gl.viewport(0, 0, originalWidth, originalHeight);
+        render();
 
         mostrarError('Éxito', 'Shader guardado correctamente');
         actualizarURL(nombre);

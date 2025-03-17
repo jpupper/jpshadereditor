@@ -79,6 +79,7 @@ body {
     border-radius: 5px;
     padding: 15px;
     margin-top: 20px;
+    max-height: 70vh;
 }
 
 #uniform-sliders label {
@@ -87,43 +88,149 @@ body {
     margin-bottom: 5px;
 }
 
-#uniform-sliders input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 5px;
-    border-radius: 5px;
-    background: var(--border-color);
-    outline: none;
-    margin: 10px 0;
-}
-
-#uniform-sliders input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#uniform-sliders input[type="range"]::-webkit-slider-thumb:hover {
-    background: var(--hover-color);
-}
-
-#uniform-sliders input[type="range"]::-moz-range-thumb {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    cursor: pointer;
+/* Estilos unificados para los sliders en todos los modos */
+html #uniform-sliders,
+html #uniform-sliders-fullscreen,
+html body[data-mode="mobile"] #uniform-sliders,
+html body[data-mode="fullscreen"] #uniform-sliders {
+    background: transparent;
     border: none;
-    transition: background 0.2s;
+    padding: 15px;
+    margin-top: 20px;
+    max-height: 70vh;
 }
 
-#uniform-sliders input[type="range"]::-moz-range-thumb:hover {
+/* Solo aplicar scroll al contenedor en modo mobile y fullscreen */
+html body[data-mode="mobile"] #uniform-sliders,
+html body[data-mode="fullscreen"] #uniform-sliders,
+html #uniform-sliders-fullscreen {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* En modo común, el scroll viene del body */
+html:not([data-mode]) #uniform-sliders,
+html body:not([data-mode]) #uniform-sliders {
+    overflow: visible;
+}
+
+/* Estilos para la barra de scroll - usando las variables globales */
+html body[data-mode="mobile"] #uniform-sliders::-webkit-scrollbar,
+html body[data-mode="fullscreen"] #uniform-sliders::-webkit-scrollbar,
+html #uniform-sliders-fullscreen::-webkit-scrollbar {
+    width: 10px;
+}
+
+html body[data-mode="mobile"] #uniform-sliders::-webkit-scrollbar-track,
+html body[data-mode="fullscreen"] #uniform-sliders::-webkit-scrollbar-track,
+html #uniform-sliders-fullscreen::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+html body[data-mode="mobile"] #uniform-sliders::-webkit-scrollbar-thumb,
+html body[data-mode="fullscreen"] #uniform-sliders::-webkit-scrollbar-thumb,
+html #uniform-sliders-fullscreen::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 5px;
+}
+
+html body[data-mode="mobile"] #uniform-sliders::-webkit-scrollbar-thumb:hover,
+html body[data-mode="fullscreen"] #uniform-sliders::-webkit-scrollbar-thumb:hover,
+html #uniform-sliders-fullscreen::-webkit-scrollbar-thumb:hover {
     background: var(--hover-color);
+}
+
+/* Ajustes específicos para modo mobile */
+body[data-mode="mobile"] #uniform-sliders {
+    max-height: 60vh;
+    padding-right: 15px;
+}
+
+/* Estilos para los wrappers de sliders */
+html #uniform-sliders > div,
+html #uniform-sliders-fullscreen > div,
+html body[data-mode="mobile"] #uniform-sliders > div,
+html body[data-mode="fullscreen"] #uniform-sliders > div {
+    margin-bottom: 10px;
+}
+
+/* Estilos para las etiquetas de los sliders */
+html #uniform-sliders label,
+html #uniform-sliders-fullscreen label,
+html body[data-mode="mobile"] #uniform-sliders label,
+html body[data-mode="fullscreen"] #uniform-sliders label {
+    color: var(--text-color);
+    font-size: 14px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Estilos para los inputs range */
+html #uniform-sliders input[type="range"],
+html #uniform-sliders-fullscreen input[type="range"],
+html body[data-mode="mobile"] #uniform-sliders input[type="range"],
+html body[data-mode="fullscreen"] #uniform-sliders input[type="range"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 100% !important;
+    height: 6px !important;
+    background: var(--border-color) !important;
+    outline: none !important;
+    margin: 10px 0 !important;
+    border-radius: 3px !important;
+    border: none !important;
+    cursor: pointer !important;
+    position: relative !important;
+}
+
+/* Estilos para el thumb de los sliders */
+html #uniform-sliders input[type="range"]::-webkit-slider-thumb,
+html #uniform-sliders-fullscreen input[type="range"]::-webkit-slider-thumb,
+html body[data-mode="mobile"] #uniform-sliders input[type="range"]::-webkit-slider-thumb,
+html body[data-mode="fullscreen"] #uniform-sliders input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    background: var(--button-bg) !important;
+    cursor: pointer !important;
+    border: none !important;
+    margin-top: -3px !important;
+}
+
+html #uniform-sliders input[type="range"]::-moz-range-thumb,
+html #uniform-sliders-fullscreen input[type="range"]::-moz-range-thumb,
+html body[data-mode="mobile"] #uniform-sliders input[type="range"]::-moz-range-thumb,
+html body[data-mode="fullscreen"] #uniform-sliders input[type="range"]::-moz-range-thumb {
+    width: 12px !important;
+    height: 12px !important;
+    border-radius: 50% !important;
+    background: var(--button-bg) !important;
+    cursor: pointer !important;
+    border: none !important;
+    margin-top: -3px !important;
+}
+
+/* Estilos para el track de los sliders */
+html #uniform-sliders input[type="range"]::-webkit-slider-runnable-track,
+html #uniform-sliders-fullscreen input[type="range"]::-webkit-slider-runnable-track,
+html body[data-mode="mobile"] #uniform-sliders input[type="range"]::-webkit-slider-runnable-track,
+html body[data-mode="fullscreen"] #uniform-sliders input[type="range"]::-webkit-slider-runnable-track {
+    background: var(--border-color) !important;
+    height: 6px !important;
+    border-radius: 3px !important;
+    border: none !important;
+}
+
+html #uniform-sliders input[type="range"]::-moz-range-track,
+html #uniform-sliders-fullscreen input[type="range"]::-moz-range-track,
+html body[data-mode="mobile"] #uniform-sliders input[type="range"]::-moz-range-track,
+html body[data-mode="fullscreen"] #uniform-sliders input[type="range"]::-moz-range-track {
+    background: var(--border-color) !important;
+    height: 6px !important;
+    border-radius: 3px !important;
+    border: none !important;
 }
 
 .view-toggle {

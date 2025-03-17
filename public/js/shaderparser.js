@@ -44,7 +44,6 @@ class ShaderParser {
     createSliderContainer(id = 'uniform-sliders') {
         const container = document.createElement('div');
         container.id = id;
-        container.style.padding = '10px';
         document.body.appendChild(container);
         return container;
     }
@@ -140,8 +139,6 @@ class ShaderParser {
         
         const label = document.createElement('label');
         label.textContent = uniformName;
-        label.style.display = 'block';
-        label.style.marginBottom = '5px';
         
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -149,7 +146,6 @@ class ShaderParser {
         slider.max = '1';
         slider.step = '0.01';
         slider.value = initialValue;
-        slider.style.width = '100%';
         
         sliderWrapper.appendChild(label);
         sliderWrapper.appendChild(slider);

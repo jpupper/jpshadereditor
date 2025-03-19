@@ -252,3 +252,60 @@ body {
 #login-modal, #register-modal {
     z-index: 1002;
 }
+
+/* Estilos para el generador de shaders con IA */
+.ai-shader-generator {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 12px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ai-shader-generator h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.ai-textarea {
+    width: 100% !important;
+    height: 60px;
+    margin-bottom: 8px;
+    resize: vertical;
+    background-color: rgba(138, 43, 226, 0.2);
+    border: 1px solid var(--button-bg);
+    color: var(--text-color);
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 3px;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.ai-textarea:focus {
+    outline: none;
+    border-color: var(--hover-color);
+}
+
+.ai-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Ajustes para modo móvil */
+@media (max-width: 768px) {
+    .ai-shader-generator {
+        padding: 8px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .ai-textarea {
+        height: 50px;
+        font-size: 12px;
+    }
+}

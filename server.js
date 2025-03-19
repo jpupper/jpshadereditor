@@ -16,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
 // const multer = require('multer'); // Quitar multer
+const { apiConfig, validateApiKeys } = require('./api-config');
+const fetch = require('node-fetch');
 
 const isRunningLocal = true;
 const PORT = process.env.PORT || 3250;
@@ -78,6 +80,50 @@ app.get('/', (req, res) => {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/plain');
     res.end('Carga app shaders');
+});
+
+// Endpoint para obtener la configuración de la API
+app.get('/shader/api/config', (req, res) => {
+    // Solo enviamos la URL de la API, no la clave
+    res.json({
+        openai: {
+            apiUrl: apiConfig.openai.apiUrl
+        }
+    });
+});
+
+// Nuevo endpoint para manejar las solicitudes a OpenAI desde el servidor
+app.post('/shader/api/openai-proxy', async (req, res) => {
+    try {
+        // Verificar que la API key esté configurada
+        if (!apiConfig.openai.apiKey) {
+            return res.status(500).json({ error: 'API key no configurada en el servidor' });
+        }
+
+        // Obtener los datos de la solicitud
+        const requestData = req.body;
+        
+        // Realizar la solicitud a OpenAI desde el servidor
+        const response = await fetch(apiConfig.openai.apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiConfig.openai.apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            return res.status(response.status).json(errorData);
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Error en proxy de OpenAI:', error);
+        res.status(500).json({ error: 'Error al procesar la solicitud a OpenAI' });
+    }
 });
 
 // Rutas API
@@ -553,14 +599,18 @@ io.on('connection', (socket) => {
 // Función para iniciar el servidor
 async function startServer() {
     try {
+        // Conectar a la base de datos
         await connectToDatabaseWrapper();
         
+        // Validar las claves de API
+        validateApiKeys();
+        
+        // Iniciar el servidor HTTP
         http.listen(PORT, () => {
-            console.log(`Servidor escuchando en puerto ${PORT}`);
+            console.log(`Servidor escuchando en el puerto ${PORT}`);
         });
     } catch (error) {
         console.error('Error al iniciar el servidor:', error);
-        process.exit(1);
     }
 }
 

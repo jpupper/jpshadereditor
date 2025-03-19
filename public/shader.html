@@ -35,6 +35,12 @@
                         <button id="save-shader" class="shader-button">Save</button>
                     </div>
                 </div>
+                <!-- Nuevo: Sección de IA para generar shaders -->
+                <div class="ai-shader-generator">
+                    <h3>Generador de Shaders con IA</h3>
+                    <textarea id="ai-prompt" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                    <button id="generate-shader" class="shader-button">Generar con IA</button>
+                </div>
                 <div id="uniform-sliders"></div>
             </div>
         </div>
@@ -74,6 +80,12 @@
                         <button id="save-shader-fullscreen" class="shader-button">Save</button>
                     </div>
                 </div>
+                <!-- Nuevo: Sección de IA para generar shaders en fullscreen -->
+                <div class="ai-shader-generator">
+                    <h3>Generador de Shaders con IA</h3>
+                    <textarea id="ai-prompt-fullscreen" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                    <button id="generate-shader-fullscreen" class="shader-button">Generar con IA</button>
+                </div>
                 <div id="uniform-sliders-fullscreen"></div>
             </div>
         </div>
@@ -107,5 +119,6 @@
     <script src="js/socket-config.js"></script>
     <script src="js/shaderparser.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/iamodel.js"></script>
 </body>
 </html>

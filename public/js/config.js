@@ -8,5 +8,11 @@ const CONFIG = {
     },
     get BASE_URL() {
         return this.isLocal ? '/shader' : '/jpshadereditor';
-    }
+    },
+    // API Key para OpenAI - NO incluir la clave real aquí
+    // Reemplazar con tu propia clave antes de usar
+    openaiApiKey: ''
 };
+
+// Exponer la configuración globalmente
+window.config = CONFIG;

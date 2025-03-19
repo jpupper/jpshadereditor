@@ -167,15 +167,59 @@ function inicializarVistasUI() {
         // Actualizar el contenido del editor cuando volvemos a la vista de código
         if (isCode) {
             const currentShader = document.getElementById('shader-dropdown').value;
-            if (currentShader) {
-                compile();
+            
+            // Forzar un refresco completo del editor para evitar problemas de visualización
+            setTimeout(() => {
                 editor.refresh();
-            }
+                
+                // Si hay un shader seleccionado, compilarlo
+                if (currentShader) {
+                    compile();
+                }
+            }, 50);
         }
     }
 
     codeViewBtn.addEventListener('click', () => setActiveView(true));
     uiViewBtn.addEventListener('click', () => setActiveView(false));
+    
+    // Configurar también para la vista en pantalla completa
+    const codeViewBtnFullscreen = document.getElementById('code-view-btn-fullscreen');
+    const uiViewBtnFullscreen = document.getElementById('ui-view-btn-fullscreen');
+    const fullscreenEditorContainer = document.getElementById('fullscreen-editor');
+    const uiContainerFullscreen = document.getElementById('ui-container-fullscreen');
+    
+    function setActiveViewFullscreen(isCode) {
+        // Actualizar estado de los botones
+        codeViewBtnFullscreen.classList.toggle('active', isCode);
+        uiViewBtnFullscreen.classList.toggle('active', !isCode);
+        
+        // Mostrar/ocultar contenedores
+        fullscreenEditorContainer.style.display = isCode ? 'block' : 'none';
+        uiContainerFullscreen.style.display = isCode ? 'none' : 'block';
+        
+        // Actualizar el contenido del editor cuando volvemos a la vista de código
+        if (isCode) {
+            const currentShader = document.getElementById('shader-dropdown-fullscreen').value;
+            
+            // Forzar un refresco completo del editor para evitar problemas de visualización
+            setTimeout(() => {
+                fullscreenEditor.refresh();
+                
+                // Si hay un shader seleccionado, compilarlo
+                if (currentShader) {
+                    compile();
+                }
+            }, 50);
+        }
+    }
+    
+    if (codeViewBtnFullscreen) {
+        codeViewBtnFullscreen.addEventListener('click', () => setActiveViewFullscreen(true));
+    }
+    if (uiViewBtnFullscreen) {
+        uiViewBtnFullscreen.addEventListener('click', () => setActiveViewFullscreen(false));
+    }
 }
 
 function configurarEventos() {

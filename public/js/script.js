@@ -797,19 +797,22 @@ socket.on("enviarShaderActual", (data) => {
 socket.on('shaderUpdate', (data) => {
     console.log('DATOS EN EL CLIENTE RECIBIDOS:', data);
 
+    // Si el update viene del mismo cliente, ignorarlo
+    if (data.id === socket.id) {
+        console.log("Ignorando update del mismo cliente");
+        return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const shaderName = params.get('shader') || 'default';
 
-    
     if (data.nombre === shaderName) {
         console.log("COINCIDE EL NOMBRE");
         console.log("EL SHADER ES : " + data.contenido);
 
-        // Evitar el feedback loop
-        //isBroadcastingUpdate = true;
         isBroadcastingUpdate = true;
         // Guardar posición actual del cursor
-       const currentCursor = editor.getCursor();
+        const currentCursor = editor.getCursor();
         const currentFullscreenCursor = fullscreenEditor.getCursor();
         
         // Actualizar contenido
@@ -821,52 +824,28 @@ socket.on('shaderUpdate', (data) => {
         fullscreenEditor.setCursor(currentFullscreenCursor);
         compile();
         
-        
         isBroadcastingUpdate = false;
-        
     } else {
         console.log("NO COINCIDE EL NOMBRE");
     }
 });
 
-socket.on("pedirShader", () => {
-    console.log("Alguien pidió el shader actual");
-    
-    // Solo enviar si estamos editando activamente (tenemos contenido)
-    const shaderContent = editor.getValue().trim();
-    if (shaderContent) {
-        const shaderName = document.getElementById('shader-name').value;
-        const shaderAuthor = document.getElementById('shader-author').value;
-        
-        console.log("Enviando mi shader actual:", shaderName);
-        socket.emit("shaderUpdate", {
-            nombre: shaderName,
-            autor: shaderAuthor,
-            contenido: shaderContent,
-            cursorPos: editor.getCursor()
-        });
-    }
-});
-
 // Escuchar actualizaciones de uniforms
 socket.on('uniformsUpdate', (data) => {
+    // Si el update viene del mismo cliente, ignorarlo
+    if (data.id === socket.id) {
+        console.log("Ignorando uniform update del mismo cliente");
+        return;
+    }
+
     const params = new URLSearchParams(window.location.search);
-    const shaderName = params.get('shader') || 'default';
-    console.log("Uniform update received:", data);
+    const currentShader = params.get('shader') || 'default';
 
-    if (data.nombre === shaderName) {
-        // Evitar el feedback loop
+    if (data.nombre === currentShader) {
+        console.log("Actualizando uniforms desde otro cliente");
         window.isBroadcastingUpdate = true;
-
-        // Actualizar todos los uniforms
-        for (const [uniformName, value] of Object.entries(data.uniforms)) {
-            shaderParser.updateUniformValue(uniformName, value);
-        }
-
-        // Recompilar el shader
-        compile();
-
-       window.isBroadcastingUpdate = false;
+        shaderParser.updateUniformsFromData(data.uniforms);
+        window.isBroadcastingUpdate = false;
     }
 });
 

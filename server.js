@@ -230,6 +230,34 @@ app.post('/shader/api/register', async (req, res) => {
     }
 });
 
+app.get('/api/users', async (req, res) => {
+    try {
+        const db = await connectToDatabaseWrapper();
+        const usersCollection = db.collection('users');
+        const users = await usersCollection.find({}, { 
+            projection: { 
+                username: 1, 
+                registerDate: 1,
+                _id: 0 
+            } 
+        }).toArray();
+        
+        console.log('Endpoint /api/users llamado');
+        console.log('Usuarios encontrados:', users.length);
+        
+        // Asegurarse de que todos los usuarios tengan una fecha de registro
+        const usersWithDates = users.map(user => ({
+            ...user,
+            registerDate: user.registerDate || new Date()
+        }));
+        
+        res.json(usersWithDates);
+    } catch (error) {
+        console.error('Error en /api/users:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios' });
+    }
+});
+
 app.get('/shader/api/user', async (req, res) => {
     const userId = req.session.userId;
 
@@ -491,15 +519,21 @@ io.on('connection', (socket) => {
             lastUpdate: new Date()
         });
 
-        // Broadcast a todos menos al emisor
-        socket.broadcast.emit('shaderUpdate', data);
+        // Broadcast solo a los clientes que no sean el emisor
+        socket.broadcast.emit('shaderUpdate', {
+            ...data,
+            socketId: socket.id  // Incluir el ID del socket emisor
+        });
     });
 
     // Cuando un cliente envía una actualización de uniformes
     socket.on('uniformsUpdate', (data) => {
-        console.log('Uniform update received:', data);
-        // Broadcast to all other clients
-        socket.broadcast.emit('uniformsUpdate', data);
+        console.log('Uniform update received from:', socket.id);
+        // Solo enviar a los clientes que no sean el emisor
+        socket.broadcast.emit('uniformsUpdate', {
+            ...data,
+            socketId: socket.id
+        });
     });
 
     // Cuando un cliente se desconecta

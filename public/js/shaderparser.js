@@ -117,7 +117,8 @@ class ShaderParser {
             
             socket.emit('uniformsUpdate', {
                 nombre: shaderName,
-                uniforms: this.getUniformValues()
+                uniforms: this.getUniformValues(),
+                socketId: socket.id 
             });
         }
     }
@@ -157,5 +158,17 @@ class ShaderParser {
     // Obtener todos los valores de uniforms actuales
     getUniformValues() {
         return Object.fromEntries(this.uniforms);
+    }
+
+    // Actualizar uniforms desde datos recibidos de otro cliente
+    updateUniformsFromData(uniformsData) {
+        // Actualizar los valores sin emitir eventos
+        for (const [uniformName, value] of Object.entries(uniformsData)) {
+            if (this.uniforms.has(uniformName)) {
+                this.uniforms.set(uniformName, value);
+            }
+        }
+        // Sincronizar los sliders con los nuevos valores
+        this.syncSlidersWithUniforms();
     }
 }

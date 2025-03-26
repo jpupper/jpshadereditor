@@ -19,7 +19,7 @@ const bcrypt = require('bcrypt');
 const { apiConfig, validateApiKeys } = require('./api-config');
 const fetch = require('node-fetch');
 
-const isRunningLocal = true;
+const isRunningLocal = false;
 const PORT = process.env.PORT || 3250;
 let db = null;
 // Agregar el Map para las conexiones activas

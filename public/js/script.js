@@ -343,6 +343,15 @@ function compile() {
     let fragment = isFullscreen ? fullscreenEditor.getValue() : editor.getValue();
     let vertex = document.getElementById('surfaceVertexShader').textContent;
 
+    // Limpiar cualquier estado anterior
+    if (!window.shaderFromAI) {
+        // Asegurarse de que los errores se muestren correctamente después de editar manualmente
+        errorDisplay.textContent = '';
+        if (fullscreenErrorDisplay) {
+            fullscreenErrorDisplay.textContent = '';
+        }
+    }
+
     const vs = createShader(vertex, gl.VERTEX_SHADER);
     const fs = createShader(fragment, gl.FRAGMENT_SHADER);
 
@@ -413,6 +422,7 @@ function createShader(src, type) {
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
         const errorInfo = gl.getShaderInfoLog(shader);
+        console.log(`Error de compilación en ${type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'} SHADER:`, errorInfo);
         mostrarError(`${type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'} SHADER ERROR`, errorInfo || 'Unknown error');
         return null;
     }
@@ -805,12 +815,12 @@ socket.on("pedirShader",(data) =>{
     console.log("SE CONECTO OTRO CLIENTE QUE NO SOY YO")
 
     const shaderName = document.getElementById('shader-name').value;
-    const autor = document.getElementById('shader-author').value;
-    const contenido = editor.getValue();
+    const shaderAuthor = document.getElementById('shader-author').value;
+    const shaderContent = editor.getValue();
     const cursorPos = editor.getCursor();
 
     // Enviar el shader actual al nuevo cliente
-    enviarShaderUpdate(shaderName, autor, contenido, cursorPos);
+    enviarShaderUpdate(shaderName, shaderAuthor, shaderContent, cursorPos);
 });
 
 socket.on("enviarShaderActual", (data) => {

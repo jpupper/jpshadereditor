@@ -107,11 +107,18 @@ class ShaderAI {
                 // Forzar el foco en el editor para asegurar que se muestre
                 editorInstance.focus();
                 
+                // Marcar que este cambio viene de la IA para que el sistema lo maneje adecuadamente
+                window.shaderFromAI = true;
+                
                 // Compilar el shader usando la función global
                 if (typeof compile === 'function') {
                     // Pequeño retraso para asegurar que el editor se ha actualizado completamente
                     setTimeout(() => {
                         compile();
+                        // Reiniciar la bandera después de la compilación
+                        setTimeout(() => {
+                            window.shaderFromAI = false;
+                        }, 100);
                     }, 100);
                 }
                 
@@ -136,26 +143,34 @@ class ShaderAI {
         }
 
         try {
-            console.log('Generando shader con prompt:', prompt);
+            console.log('Generando shader con el prompt:', prompt);
+            
+            // Cargar el contexto desde el archivo
+            const contextResponse = await fetch('js/context.txt');
+            if (!contextResponse.ok) {
+                throw new Error('No se pudo cargar el archivo de contexto');
+            }
+            const systemContent = await contextResponse.text();
+            
+            // Obtener el contenido actual del editor
+            const isFullscreen = document.getElementById('fullscreen-container').style.display !== 'none';
+            const currentShaderCode = isFullscreen ? fullscreenEditor.getValue() : editor.getValue();
+            
+            console.log('Contexto cargado desde context.txt:', systemContent);
+            console.log('Shader actual del editor:', currentShaderCode);
             
             const messages = [
                 {
                     role: "system",
-                    content: `Eres un asistente especializado en generar código GLSL para shaders. 
-                    Tu tarea es crear un fragment shader compatible con WebGL basado en la descripción del usuario.
-                    Debes devolver SOLO el código del shader, sin explicaciones adicionales.
-                    El código debe estar completo y listo para ser usado, incluyendo todas las variables y funciones necesarias.
-                    Asegúrate de que el shader sea visualmente interesante y eficiente.
-                    El shader debe comenzar con la línea "#version 300 es" y definir "precision highp float;".
-                    Debe incluir una función main() que asigne un color a fragColor.
-                    Utiliza las variables uniformes: time (float), resolution (vec2), y mouse (vec2).
-                    NO incluyas comentarios explicativos extensos, solo el código necesario.`
+                    content: systemContent
                 },
                 {
                     role: "user",
-                    content: prompt
+                    content: `Here is the current shader code:\n\n\`\`\`glsl\n${currentShaderCode}\n\`\`\`\n\nModify this shader according to the following instruction: ${prompt}`
                 }
             ];
+            
+            console.log('Mensajes enviados al modelo:', JSON.stringify(messages, null, 2));
 
             const data = await this.makeOpenAIRequest(messages);
             const shaderCode = data.choices[0].message.content;

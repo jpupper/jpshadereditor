@@ -35,6 +35,8 @@ async function connectToDatabaseWrapper() {
         console.log('Intentando conectar a MongoDB...');
         console.log('Modo:', isRunningLocal ? 'local' : 'Atlas');
         db = await connectToDatabase(isRunningLocal);
+        const collections = await db.listCollections().toArray();
+        console.log('Colecciones disponibles:', collections.map(c => c.name));
         console.log('Conexión exitosa a MongoDB');
         return db;
     } catch (error) {
@@ -266,7 +268,8 @@ app.post('/shader/api/register', async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            registerDate: new Date()  // Agregar fecha de registro
+            registerDate: new Date().toISOString(),
+            promptsRemaining: 10  // Asignar 10 prompts por defecto
         });
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
@@ -284,20 +287,17 @@ app.get('/api/users', async (req, res) => {
             projection: { 
                 username: 1, 
                 registerDate: 1,
+                promptsRemaining: 1,
                 _id: 0 
             } 
         }).toArray();
         
         console.log('Endpoint /api/users llamado');
+        console.log('Base de datos:', db.databaseName);
         console.log('Usuarios encontrados:', users.length);
+        console.log('Datos completos de usuarios:', JSON.stringify(users, null, 2));
         
-        // Asegurarse de que todos los usuarios tengan una fecha de registro
-        const usersWithDates = users.map(user => ({
-            ...user,
-            registerDate: user.registerDate || new Date()
-        }));
-        
-        res.json(usersWithDates);
+        res.json(users);
     } catch (error) {
         console.error('Error en /api/users:', error);
         res.status(500).json({ error: 'Error al obtener usuarios' });

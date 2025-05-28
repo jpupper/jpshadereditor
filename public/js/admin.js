@@ -38,15 +38,24 @@ function initializeTabs() {
 }
 
 // Formateo de fechas
-function formatDate(date) {
-    return new Date(date).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+function formatDate(isoDate) {
+    if (!isoDate) return 'No disponible';
+    try {
+        const date = new Date(isoDate);
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        
+        return date.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (error) {
+        console.error('Error al formatear fecha:', error);
+        return 'Error de formato';
+    }
 }
 
 // Funciones para la pestaña Live
@@ -159,18 +168,26 @@ async function loadShadersList() {
 // Funciones para la pestaña Users
 async function loadUsersList() {
     try {
+        console.log('Fetching users from:', `${CONFIG.API_URL}/api/users`);
         const response = await fetch(`${CONFIG.API_URL}/api/users`);
         if (!response.ok) throw new Error('Error al cargar usuarios');
         
         const users = await response.json();
+        console.log('Users data received:', users);
+        
         const tbody = document.querySelector('#users-table tbody');
         tbody.innerHTML = '';
         
         users.forEach(user => {
+            console.log('User data:', JSON.stringify(user, null, 2));
             const row = document.createElement('tr');
+            const formattedDate = user.registerDate ? formatDate(user.registerDate) : 'No disponible';
+            console.log('Formatted date:', formattedDate);
+            
             row.innerHTML = `
                 <td>${user.username}</td>
-                <td>${formatDate(user.registerDate || new Date())}</td>
+                <td>${formattedDate}</td>
+                <td>${user.promptsRemaining !== undefined ? user.promptsRemaining : 'N/A'}</td>
             `;
             tbody.appendChild(row);
         });

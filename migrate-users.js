@@ -17,9 +17,14 @@ async function migrateUsers() {
         const totalUsers = await usersCollection.countDocuments();
         console.log('Total de usuarios encontrados:', totalUsers);
         
-        // Mostrar algunos usuarios de ejemplo
-        const sampleUsers = await usersCollection.find().limit(3).toArray();
-        console.log('Ejemplo de usuarios en la base de datos:', JSON.stringify(sampleUsers, null, 2));
+        // Mostrar todos los usuarios
+        const allUsers = await usersCollection.find().toArray();
+        console.log('\nEstado actual de todos los usuarios:');
+        allUsers.forEach(user => {
+            console.log(`\nUsuario: ${user.username}`);
+            console.log(`Prompts restantes: ${user.promptsRemaining !== undefined ? user.promptsRemaining : 'NO DEFINIDO'}`);
+            console.log('Datos completos:', JSON.stringify(user, null, 2));
+        });
         
         // Actualizar todos los usuarios que no tengan promptsRemaining
         const result = await usersCollection.updateMany(

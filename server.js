@@ -84,6 +84,14 @@ app.get('/', (req, res) => {
     res.end('Carga app shaders');
 });
 
+// Endpoint temporal para verificar versión del código
+app.get('/shader/api/test-version', (req, res) => {
+    res.json({
+        version: '2025-05-28-14:45',
+        hasPromptsRemaining: true
+    });
+});
+
 // Endpoint para obtener la configuración de la API
 app.get('/shader/api/config', (req, res) => {
     // Solo enviamos la URL de la API, no la clave
@@ -264,13 +272,16 @@ app.post('/shader/api/register', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await usersCollection.insertOne({
+        const userData = {
             username,
             email,
             password: hashedPassword,
             registerDate: new Date().toISOString(),
             promptsRemaining: 10  // Asignar 10 prompts por defecto
-        });
+        };
+        
+        console.log('Registrando nuevo usuario:', JSON.stringify(userData, null, 2));
+        await usersCollection.insertOne(userData);
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
     } catch (error) {
@@ -279,23 +290,29 @@ app.post('/shader/api/register', async (req, res) => {
     }
 });
 
-app.get('/api/users', async (req, res) => {
+app.get('/shader/api/users', async (req, res) => {
     try {
+        console.log('1. Iniciando endpoint /api/users');
         const db = await connectToDatabaseWrapper();
+        console.log('2. Base de datos:', db.databaseName);
+        
         const usersCollection = db.collection('users');
-        const users = await usersCollection.find({}, { 
-            projection: { 
-                username: 1, 
-                registerDate: 1,
-                promptsRemaining: 1,
-                _id: 0 
-            } 
+        
+        // Primero obtener todos los usuarios SIN proyección
+        const allUsers = await usersCollection.find({}).toArray();
+        console.log('3. DATOS COMPLETOS del primer usuario:', JSON.stringify(allUsers[0], null, 2));
+        console.log('4. Campos disponibles:', Object.keys(allUsers[0]));
+        
+        // Ahora sí, obtener los usuarios con la proyección
+        const users = await usersCollection.find({}).project({
+            username: 1,
+            registerDate: 1,
+            promptsRemaining: 1,
+            _id: 0
         }).toArray();
         
-        console.log('Endpoint /api/users llamado');
-        console.log('Base de datos:', db.databaseName);
-        console.log('Usuarios encontrados:', users.length);
-        console.log('Datos completos de usuarios:', JSON.stringify(users, null, 2));
+        console.log('5. DATOS PROYECTADOS del primer usuario:', JSON.stringify(users[0], null, 2));
+        console.log('6. Total usuarios:', users.length);
         
         res.json(users);
     } catch (error) {

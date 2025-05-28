@@ -168,12 +168,27 @@ async function loadShadersList() {
 // Funciones para la pestaña Users
 async function loadUsersList() {
     try {
-        console.log('Fetching users from:', `${CONFIG.API_URL}/api/users`);
-        const response = await fetch(`${CONFIG.API_URL}/api/users`);
+        const url = `${CONFIG.API_URL}/api/users`;
+        console.log('1. URL de la petición:', url);
+        
+        const response = await fetch(url);
+        console.log('2. Response status:', response.status);
+        console.log('3. Response headers:', Object.fromEntries(response.headers.entries()));
+        
         if (!response.ok) throw new Error('Error al cargar usuarios');
         
-        const users = await response.json();
-        console.log('Users data received:', users);
+        const responseText = await response.text();
+        console.log('4. Response text:', responseText);
+        
+        const users = JSON.parse(responseText);
+        console.log('5. Parsed users:', users);
+        
+        // Verificar la estructura de cada usuario
+        users.forEach((user, index) => {
+            console.log(`Usuario ${index}:`, user);
+            console.log('Campos disponibles:', Object.keys(user));
+            console.log('promptsRemaining:', user.promptsRemaining);
+        });
         
         const tbody = document.querySelector('#users-table tbody');
         tbody.innerHTML = '';

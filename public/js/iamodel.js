@@ -49,11 +49,32 @@ class ShaderAI {
                 const username = localStorage.getItem('username');
                 
                 // Restaurar el HTML original según el tipo de elemento
-                element.innerHTML = `
-                    <h3>Generador de Shaders con IA</h3>
-                    <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
-                    <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
-                `;
+                // Obtener la información del usuario actual
+                fetch(`${window.config.API_URL}/api/user-profile?username=${username}`)
+                    .then(response => response.json())
+                    .then(userData => {
+                        element.innerHTML = `
+                            <h3>Generador de Shaders con IA</h3>
+                            <p class="prompts-remaining">Prompts restantes: ${userData.promptsRemaining || 0}</p>
+                            <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                            <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
+                        `;
+                        
+                        // Volver a añadir los event listeners para los botones recién creados
+                        const generateBtn = element.querySelector(`#generate-shader${isFullscreen ? '-fullscreen' : ''}`);
+                        if (generateBtn) {
+                            generateBtn.addEventListener('click', () => this.handleGenerate(isFullscreen));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener información del usuario:', error);
+                        element.innerHTML = `
+                            <h3>Generador de Shaders con IA</h3>
+                            <p class="prompts-remaining">Error al cargar prompts restantes</p>
+                            <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                            <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
+                        `;
+                    });
                 
                 // Volver a añadir los event listeners para los botones recién creados
                 const generateBtn = element.querySelector(`#generate-shader${isFullscreen ? '-fullscreen' : ''}`);

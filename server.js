@@ -389,7 +389,8 @@ app.get('/shader/api/user-profile', async (req, res) => {
 
         res.json({
             username: user.username,
-            description: user.description || ''
+            description: user.description || '',
+            promptsRemaining: user.promptsRemaining || 0
         });
     } catch (error) {
         console.error('Error al obtener perfil:', error);

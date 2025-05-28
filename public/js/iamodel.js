@@ -3,8 +3,10 @@ class ShaderAI {
         this.API_URL = null;
         this.API_KEY = null;
         this.initialized = false;
+        this.available = true; // Nueva propiedad para controlar la disponibilidad de la IA
         this.initializeAPI();
         this.setupEventListeners();
+        this.updateAIAvailability(); // Actualizar la interfaz según la disponibilidad
     }
 
     async initializeAPI() {
@@ -23,7 +25,7 @@ class ShaderAI {
             console.log('API de IA inicializada correctamente');
         } catch (error) {
             console.error('Error al inicializar la API de IA:', error);
-            alert('No se pudo inicializar la API de IA. Algunas funciones pueden no estar disponibles.');
+            this.showError('No se pudo inicializar la API de IA. Algunas funciones pueden no estar disponibles.');
         }
     }
 
@@ -39,21 +41,30 @@ class ShaderAI {
             if (generateBtnFullscreen) {
                 generateBtnFullscreen.addEventListener('click', () => this.handleGenerate(true));
             }
+            
+            // Actualizar la interfaz según la disponibilidad después de que el DOM esté cargado
+            this.updateAIAvailability();
         });
     }
 
     async handleGenerate(isFullscreen) {
+        // Verificar si la IA está disponible
+        if (!this.available) {
+            this.showError('La generación por IA no está disponible en este momento.', isFullscreen);
+            return;
+        }
+        
         const promptInput = document.getElementById(isFullscreen ? 'ai-prompt-fullscreen' : 'ai-prompt');
         const prompt = promptInput.value.trim();
         
         if (!prompt) {
-            alert('Por favor ingresa una descripción para el shader');
+            this.showError('Por favor ingresa una descripción para el shader', isFullscreen);
             return;
         }
 
         // Verificar si la API está inicializada
         if (!this.initialized || !this.API_URL) {
-            alert('La API de IA no está inicializada correctamente. Por favor, verifica la configuración.');
+            this.showError('La API de IA no está inicializada correctamente. Por favor, verifica la configuración.', isFullscreen);
             return;
         }
 
@@ -77,7 +88,7 @@ class ShaderAI {
 
         } catch (error) {
             console.error('Error generating shader:', error);
-            alert('Error al generar el shader. Por favor intenta de nuevo.');
+            this.showError('Error al generar el shader. Por favor intenta de nuevo.', isFullscreen);
             
             // Restaurar el botón en caso de error
             const generateBtn = document.getElementById(isFullscreen ? 'generate-shader-fullscreen' : 'generate-shader');
@@ -231,6 +242,109 @@ class ShaderAI {
         // Si todo falla, devolver el texto original
         console.log('No se pudo extraer el shader, devolviendo texto original');
         return text;
+    }
+
+    
+    /**
+     * Actualiza la interfaz de usuario según la disponibilidad de la IA
+     * Si this.available es false, muestra "Generación por IA no disponible" en los contenedores
+     * Si this.available es true, mantiene la interfaz original
+     */
+    updateAIAvailability() {
+        // Asegurarse de que el DOM está cargado
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this._updateAIElements());
+        } else {
+            this._updateAIElements();
+        }
+    }
+    
+    /**
+     * Método interno para actualizar los elementos de la interfaz
+     */
+    _updateAIElements() {
+        // Obtener todos los elementos con la clase ai-shader-generator
+        const aiGeneratorElements = document.querySelectorAll('.ai-shader-generator');
+        
+        aiGeneratorElements.forEach(element => {
+            if (!this.available) {
+                // Si la IA no está disponible, modificar el contenido
+                element.innerHTML = '<h3>Generación por IA no disponible</h3>';
+                element.classList.add('ai-unavailable');
+            } else if (element.classList.contains('ai-unavailable')) {
+                // Si la IA está disponible y el elemento tiene la clase ai-unavailable,
+                // restaurar el contenido original (solo si es necesario)
+                element.classList.remove('ai-unavailable');
+                
+                // Determinar si este es el elemento de pantalla completa o normal
+                const isFullscreen = element.closest('#ui-container-fullscreen') !== null;
+                
+                // Restaurar el HTML original según el tipo de elemento
+                element.innerHTML = `
+                    <h3>Generador de Shaders con IA</h3>
+                    <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                    <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
+                `;
+                
+                // Volver a añadir los event listeners para los botones recién creados
+                const generateBtn = element.querySelector(`#generate-shader${isFullscreen ? '-fullscreen' : ''}`);
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', () => this.handleGenerate(isFullscreen));
+                }
+            }
+        });
+        
+        console.log(`Estado de disponibilidad de IA: ${this.available ? 'Disponible' : 'No disponible'}`);
+    }
+    
+    /**
+     * Método para cambiar la disponibilidad de la IA
+     * @param {boolean} value - Nuevo valor de disponibilidad
+     */
+    setAvailability(value) {
+        this.available = Boolean(value);
+        this.updateAIAvailability();
+        console.log(`Disponibilidad de IA cambiada a: ${this.available}`);
+    }
+    
+    /**
+     * Muestra un mensaje de error en el contenedor apropiado
+     * @param {string} message - Mensaje de error a mostrar
+     * @param {boolean} isFullscreen - Si estamos en modo pantalla completa o no
+     */
+    showError(message, isFullscreen = false) {
+        // Determinar el contenedor de error adecuado
+        const errorContainer = document.getElementById(isFullscreen ? 'fullscreen-error-display' : 'error-display');
+        
+        if (errorContainer) {
+            // Crear un elemento para el mensaje de error
+            const errorElement = document.createElement('div');
+            errorElement.className = 'error-message';
+            errorElement.textContent = message;
+            
+            // Limpiar errores anteriores
+            errorContainer.innerHTML = '';
+            
+            // Añadir el nuevo mensaje de error
+            errorContainer.appendChild(errorElement);
+            
+            // Hacer visible el contenedor de error
+            errorContainer.style.display = 'block';
+            
+            // Configurar un temporizador para ocultar el mensaje después de 5 segundos
+            setTimeout(() => {
+                errorElement.classList.add('fade-out');
+                setTimeout(() => {
+                    errorContainer.removeChild(errorElement);
+                    if (errorContainer.children.length === 0) {
+                        errorContainer.style.display = 'none';
+                    }
+                }, 500); // Tiempo para la animación de desvanecimiento
+            }, 5000);
+        } else {
+            // Si no hay contenedor de error, usar console.error como respaldo
+            console.error('Error:', message);
+        }
     }
 }
 

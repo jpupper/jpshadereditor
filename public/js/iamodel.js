@@ -3,10 +3,10 @@ class ShaderAI {
         this.API_URL = null;
         this.API_KEY = null;
         this.initialized = false;
-        this.available = true; // Nueva propiedad para controlar la disponibilidad de la IA
+        this.available = false; // Por defecto la IA no está disponible hasta que se verifique el login
         this.initializeAPI();
         this.setupEventListeners();
-        this.updateAIAvailability(); // Actualizar la interfaz según la disponibilidad
+        this.checkLoginStatus(); // Verificar estado de login inicial
     }
 
     async initializeAPI() {
@@ -29,21 +29,55 @@ class ShaderAI {
         }
     }
 
+    setActive(_value) {
+        this.available = _value;
+        
+        // Actualizar la interfaz según la disponibilidad
+        const aiGeneratorElements = document.querySelectorAll('.ai-shader-generator');
+        
+        aiGeneratorElements.forEach(element => {
+            if (!this.available) {
+                // Si la IA no está disponible, modificar el contenido
+                element.innerHTML = '<h3>Generación por IA no disponible</h3>';
+                element.classList.add('ai-unavailable');
+            } else {
+                // Si la IA está disponible, mostrar la interfaz completa
+                element.classList.remove('ai-unavailable');
+                
+                // Determinar si este es el elemento de pantalla completa o normal
+                const isFullscreen = element.closest('#ui-container-fullscreen') !== null;
+                const username = localStorage.getItem('username');
+                
+                // Restaurar el HTML original según el tipo de elemento
+                element.innerHTML = `
+                    <h3>Generador de Shaders con IA</h3>
+                    <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
+                    <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
+                `;
+                
+                // Volver a añadir los event listeners para los botones recién creados
+                const generateBtn = element.querySelector(`#generate-shader${isFullscreen ? '-fullscreen' : ''}`);
+                if (generateBtn) {
+                    generateBtn.addEventListener('click', () => this.handleGenerate(isFullscreen));
+                }
+            }
+        });
+        
+        console.log(`Estado de disponibilidad de IA: ${this.available ? 'Disponible' : 'No disponible'}`);
+    }
+
     setupEventListeners() {
         // Esperamos a que el DOM esté completamente cargado para asegurar que los botones existen
         document.addEventListener('DOMContentLoaded', () => {
-            const generateBtn = document.getElementById('generate-shader');
-            const generateBtnFullscreen = document.getElementById('generate-shader-fullscreen');
+            // Escuchar cambios en el estado de login
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'username') {
+                    this.checkLoginStatus();
+                }
+            });
             
-            if (generateBtn) {
-                generateBtn.addEventListener('click', () => this.handleGenerate(false));
-            }
-            if (generateBtnFullscreen) {
-                generateBtnFullscreen.addEventListener('click', () => this.handleGenerate(true));
-            }
-            
-            // Actualizar la interfaz según la disponibilidad después de que el DOM esté cargado
-            this.updateAIAvailability();
+            // Verificar estado inicial
+            this.checkLoginStatus();
         });
     }
 
@@ -94,56 +128,6 @@ class ShaderAI {
             const generateBtn = document.getElementById(isFullscreen ? 'generate-shader-fullscreen' : 'generate-shader');
             generateBtn.textContent = 'Generar con IA';
             generateBtn.disabled = false;
-        }
-    }
-
-    updateEditorContent(shaderCode, isFullscreen) {
-        try {
-            // Acceder directamente a las variables globales del editor
-            const editorInstance = isFullscreen ? fullscreenEditor : editor;
-            
-            if (editorInstance) {
-                // Guardar la posición del cursor actual
-                const cursorPos = editorInstance.getCursor();
-                
-                // Actualizar el contenido del editor
-                editorInstance.setValue(shaderCode);
-                
-                // Forzar al editor a refrescarse
-                editorInstance.refresh();
-                
-                // Restaurar la posición del cursor
-                editorInstance.setCursor(cursorPos);
-                
-                // Forzar el foco en el editor para asegurar que se muestre
-                editorInstance.focus();
-                
-                // Marcar que este cambio viene de la IA para que el sistema lo maneje adecuadamente
-                window.shaderFromAI = true;
-                
-                // Compilar el shader usando la función global
-                if (typeof compile === 'function') {
-                    // Pequeño retraso para asegurar que el editor se ha actualizado completamente
-                    setTimeout(() => {
-                        compile();
-                        // Reiniciar la bandera después de la compilación
-                        setTimeout(() => {
-                            window.shaderFromAI = false;
-                        }, 100);
-                    }, 100);
-                }
-                
-                // Enviar actualización a otros clientes si está disponible
-                if (typeof enviarShaderUpdate === 'function') {
-                    const nombre = document.getElementById(isFullscreen ? 'shader-name-fullscreen' : 'shader-name').value;
-                    const autor = document.getElementById(isFullscreen ? 'shader-author-fullscreen' : 'shader-author').value;
-                    enviarShaderUpdate(nombre, autor, shaderCode, cursorPos);
-                }
-            } else {
-                console.error('No se pudo encontrar la instancia del editor');
-            }
-        } catch (error) {
-            console.error('Error al actualizar el editor:', error);
         }
     }
 
@@ -244,69 +228,64 @@ class ShaderAI {
         return text;
     }
 
-    
-    /**
-     * Actualiza la interfaz de usuario según la disponibilidad de la IA
-     * Si this.available es false, muestra "Generación por IA no disponible" en los contenedores
-     * Si this.available es true, mantiene la interfaz original
-     */
-    updateAIAvailability() {
-        // Asegurarse de que el DOM está cargado
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this._updateAIElements());
-        } else {
-            this._updateAIElements();
+    updateEditorContent(shaderCode, isFullscreen) {
+        try {
+            // Acceder directamente a las variables globales del editor
+            const editorInstance = isFullscreen ? fullscreenEditor : editor;
+            
+            if (editorInstance) {
+                // Guardar la posición del cursor actual
+                const cursorPos = editorInstance.getCursor();
+                
+                // Actualizar el contenido del editor
+                editorInstance.setValue(shaderCode);
+                
+                // Forzar al editor a refrescarse
+                editorInstance.refresh();
+                
+                // Restaurar la posición del cursor
+                editorInstance.setCursor(cursorPos);
+                
+                // Forzar el foco en el editor para asegurar que se muestre
+                editorInstance.focus();
+                
+                // Marcar que este cambio viene de la IA para que el sistema lo maneje adecuadamente
+                window.shaderFromAI = true;
+                
+                // Compilar el shader usando la función global
+                if (typeof compile === 'function') {
+                    // Pequeño retraso para asegurar que el editor se ha actualizado completamente
+                    setTimeout(() => {
+                        compile();
+                        // Reiniciar la bandera después de la compilación
+                        setTimeout(() => {
+                            window.shaderFromAI = false;
+                        }, 100);
+                    }, 100);
+                }
+                
+                // Enviar actualización a otros clientes si está disponible
+                if (typeof enviarShaderUpdate === 'function') {
+                    const nombre = document.getElementById(isFullscreen ? 'shader-name-fullscreen' : 'shader-name').value;
+                    const autor = document.getElementById(isFullscreen ? 'shader-author-fullscreen' : 'shader-author').value;
+                    enviarShaderUpdate(nombre, autor, shaderCode, cursorPos);
+                }
+            } else {
+                console.error('No se pudo encontrar la instancia del editor');
+            }
+        } catch (error) {
+            console.error('Error al actualizar el editor:', error);
         }
     }
-    
+
     /**
-     * Método interno para actualizar los elementos de la interfaz
+     * Verifica el estado de login y actualiza la disponibilidad de la IA
      */
-    _updateAIElements() {
-        // Obtener todos los elementos con la clase ai-shader-generator
-        const aiGeneratorElements = document.querySelectorAll('.ai-shader-generator');
-        
-        aiGeneratorElements.forEach(element => {
-            if (!this.available) {
-                // Si la IA no está disponible, modificar el contenido
-                element.innerHTML = '<h3>Generación por IA no disponible</h3>';
-                element.classList.add('ai-unavailable');
-            } else if (element.classList.contains('ai-unavailable')) {
-                // Si la IA está disponible y el elemento tiene la clase ai-unavailable,
-                // restaurar el contenido original (solo si es necesario)
-                element.classList.remove('ai-unavailable');
-                
-                // Determinar si este es el elemento de pantalla completa o normal
-                const isFullscreen = element.closest('#ui-container-fullscreen') !== null;
-                
-                // Restaurar el HTML original según el tipo de elemento
-                element.innerHTML = `
-                    <h3>Generador de Shaders con IA</h3>
-                    <textarea id="ai-prompt${isFullscreen ? '-fullscreen' : ''}" placeholder="Describe el shader que quieres generar..." class="shader-input ai-textarea"></textarea>
-                    <button id="generate-shader${isFullscreen ? '-fullscreen' : ''}" class="shader-button">Generar con IA</button>
-                `;
-                
-                // Volver a añadir los event listeners para los botones recién creados
-                const generateBtn = element.querySelector(`#generate-shader${isFullscreen ? '-fullscreen' : ''}`);
-                if (generateBtn) {
-                    generateBtn.addEventListener('click', () => this.handleGenerate(isFullscreen));
-                }
-            }
-        });
-        
-        console.log(`Estado de disponibilidad de IA: ${this.available ? 'Disponible' : 'No disponible'}`);
+    checkLoginStatus() {
+        const username = localStorage.getItem('username');
+        this.setActive(!!username); // Activar la IA solo si hay un usuario logueado
     }
-    
-    /**
-     * Método para cambiar la disponibilidad de la IA
-     * @param {boolean} value - Nuevo valor de disponibilidad
-     */
-    setAvailability(value) {
-        this.available = Boolean(value);
-        this.updateAIAvailability();
-        console.log(`Disponibilidad de IA cambiada a: ${this.available}`);
-    }
-    
+
     /**
      * Muestra un mensaje de error en el contenedor apropiado
      * @param {string} message - Mensaje de error a mostrar
